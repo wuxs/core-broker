@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "core-broker.name" . }}
+  labels:
+    app: {{ include "core-broker.name" . }}
+spec:
+  ports:
+    - port: {{ .Values.appPort }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ include "core-broker.name" . }}

@@ -31,6 +31,7 @@ import (
 
 	// User import.
 
+	Subscribe_v1 "github.com/tkeel-io/core-broker/api/dapr"
 	Topic_v1 "github.com/tkeel-io/core-broker/api/topic/v1"
 	Entity_v1 "github.com/tkeel-io/core-broker/api/ws/v1"
 
@@ -80,6 +81,10 @@ func main() {
 		TopicSrv := service.NewTopicService()
 		Topic_v1.RegisterTopicHTTPServer(httpSrv.Container, TopicSrv)
 		Topic_v1.RegisterTopicServer(grpcSrv.GetServe(), TopicSrv)
+
+		SubscribeSrv := service.NewSubscribeService()
+		Subscribe_v1.RegisterSubscribeHTTPServer(httpSrv.Container, SubscribeSrv)
+		Subscribe_v1.RegisterSubscribeServer(grpcSrv.GetServe(), SubscribeSrv)
 	}
 
 	if err := app.Run(context.TODO()); err != nil {

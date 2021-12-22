@@ -20,6 +20,7 @@ import (
 	"context"
 
 	pb "github.com/tkeel-io/core-broker/api/topic/v1"
+	"github.com/tkeel-io/core-broker/pkg/types"
 	"github.com/tkeel-io/kit/log"
 )
 
@@ -41,7 +42,7 @@ func NewTopicService() *TopicService {
 }
 
 func (s *TopicService) TopicEventHandler(ctx context.Context, req *pb.TopicEventRequest) (*pb.TopicEventResponse, error) {
-	MsgChan <- req
-	log.Debug("topic event")
+	types.MsgChan <- req
+	log.Debug("topic event", req)
 	return &pb.TopicEventResponse{Status: SubscriptionResponseStatusSuccess}, nil
 }

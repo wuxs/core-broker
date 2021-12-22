@@ -23,27 +23,36 @@ import (
 	go_restful "github.com/emicklei/go-restful"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/tkeel-io/core-broker/pkg/core"
+	"github.com/tkeel-io/core-broker/pkg/types"
 	"github.com/tkeel-io/kit/log"
 )
 
 type EntityService struct {
 	msgChanMap map[string]map[string]chan []byte // entityID  clientID msgChan
+	coreClient core.Client
 }
 
 func NewEntityService() *EntityService {
 	msgChanMap := make(map[string]map[string]chan []byte)
-	return &EntityService{msgChanMap: msgChanMap}
+	client, err := core.NewCoreClient()
+	if err != nil {
+		log.Error(err)
+		return nil
+	}
+	return &EntityService{msgChanMap: msgChanMap, coreClient: *client}
 }
 
 func (s *EntityService) Run() {
 	var entityID string
 	for {
-		msg := <-MsgChan
+		msg := <-types.MsgChan
 		msgData, _ := msg.Data.MarshalJSON()
 
 		switch kv := msg.Data.AsInterface().(type) {
 		case map[string]interface{}:
-			entityID = interface2string(kv["id"])
+			subID := types.Interface2string(kv["id"])
+			entityID = types.GetEntityID(subID)
 		}
 
 		if clientMsgChan, ok := s.msgChanMap[entityID]; ok {
@@ -66,12 +75,16 @@ func (s *EntityService) handleRequest(c *websocket.Conn, stopChan chan struct{},
 		if err != nil {
 			if _, ok := s.msgChanMap[entityID]; ok {
 				delete(s.msgChanMap[entityID], clientID)
+				if len(s.msgChanMap[entityID]) == 0 {
+					s.coreClient.UnSubscribe(entityID)
+					delete(s.msgChanMap, entityID)
+				}
 			}
 			close(stopChan)
 			return
 		}
 
-		wsReq := WsRequest{}
+		wsReq := types.WsRequest{}
 		err = json.Unmarshal(p, &wsReq)
 		if err != nil || wsReq.ID == "" {
 			log.Error(err)
@@ -87,6 +100,7 @@ func (s *EntityService) handleRequest(c *websocket.Conn, stopChan chan struct{},
 		}
 		if _, ok := s.msgChanMap[entityID]; !ok {
 			s.msgChanMap[entityID] = make(map[string]chan []byte)
+			s.coreClient.Subscribe(entityID)
 		}
 		s.msgChanMap[entityID][clientID] = msgChan
 	}

@@ -1,7 +1,7 @@
 GOPATH:=$(shell go env GOPATH)
 VERSION=$(shell git describe --tags --always)
 INTERNAL_PROTO_FILES=$(shell find internal -name *.proto)
-API_PROTO_FILES=$(shell find api -name topic.proto)
+API_PROTO_FILES=$(shell find api -name error.proto)
 
 LOCAL_OS := $(shell uname)
 ifeq ($(LOCAL_OS),Linux)
@@ -52,13 +52,17 @@ api:
 .PHONY: build
 # build
 build:
-	mkdir -p bin/ && go build -ldflags "-X main.Version=$(VERSION)" -o ./bin/ ./...
+	mkdir -p bin/ && CGO_ENABLED=0 go build -ldflags "-X main.Version=$(VERSION)" -o ./bin/ ./...
 
 .PHONY: generate
 # generate
 generate:
 	go generate ./...
 
+docker-build:
+	docker build -t tkeelio/core-broker:0.2.0 .
+docker-push:
+	docker push tkeelio/core-broker:0.2.0
 
 .PHONY: all
 # generate all

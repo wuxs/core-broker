@@ -1,0 +1,17 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: core-broker-pubsub
+  labels:
+    {{- include "core-broker.labels" . | nindent 4 }}
+spec:
+  type: pubsub.redis
+  version: v1
+  metadata:
+  - name: redisHost
+    value: tkeel-middleware-redis-master:6379
+  - name: redisPassword
+    secretKeyRef:
+      name: tkeel-middleware-redis
+      key: redis-password
+

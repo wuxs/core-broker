@@ -1,0 +1,8 @@
+apiVersion: dapr.io/v1alpha1
+kind: Subscription
+metadata:
+  name: core-broker-sub
+spec:
+  topic: core-broker-sub
+  route: /v1/topic
+  pubsubname: core-broker-pubsub

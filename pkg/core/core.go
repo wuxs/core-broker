@@ -32,7 +32,6 @@ type SubscriptionData struct {
 }
 
 func (c *Client) Subscribe(entityID string) error {
-	appID := "core"
 	ctx := context.Background()
 	subscriptionID := types.GetSubscriptionID(entityID)
 	methodName := fmt.Sprintf("v1/subscriptions?id=%s&owner=admin&source=dm&type=SUBSCRIPTION", subscriptionID)
@@ -53,17 +52,16 @@ func (c *Client) Subscribe(entityID string) error {
 
 	content := &dapr.DataContent{
 		Data:        contentData,
-		ContentType: "application/json",
+		ContentType: MIME_JSON,
 	}
-	c.daprClient.InvokeMethodWithContent(ctx, appID, methodName, http.MethodPost, content)
+	c.daprClient.InvokeMethodWithContent(ctx, CoreAppID, methodName, http.MethodPost, content)
 	return nil
 }
 
 func (c *Client) UnSubscribe(entityID string) error {
-	appID := "core"
 	ctx := context.Background()
 	subscriptionID := types.GetSubscriptionID(entityID)
 	methodName := fmt.Sprintf("v1/subscriptions/%s?owner=admin&source=dm&type=SUBSCRIPTION", subscriptionID)
-	c.daprClient.InvokeMethod(ctx, appID, methodName, http.MethodDelete)
+	c.daprClient.InvokeMethod(ctx, CoreAppID, methodName, http.MethodDelete)
 	return nil
 }

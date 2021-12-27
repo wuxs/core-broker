@@ -35,7 +35,7 @@ func (c *Client) Subscribe(entityID string) error {
 	ctx := context.Background()
 	subscriptionID := types.GetSubscriptionID(entityID)
 	methodName := fmt.Sprintf("v1/subscriptions?id=%s&owner=admin&source=dm&type=SUBSCRIPTION", subscriptionID)
-	filter := fmt.Sprintf("insert into %s select %s.status", subscriptionID, entityID)
+	filter := fmt.Sprintf("insert into %s select %s.*", subscriptionID, entityID)
 
 	subscriptionData := SubscriptionData{
 		Mode:       "realtime",

@@ -8,7 +8,7 @@ spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
-  serviceName: {{ include "core-broker.name" . }}
+  serviceName: {{ printf "%s-headless" (include "core-broker.name" .) }}
   selector:
     matchLabels:
       app: {{ include "core-broker.name" . }}

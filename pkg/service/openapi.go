@@ -48,9 +48,9 @@ func (s *OpenapiService) AddonsIdentify(ctx context.Context, in *openapi_v1.Addo
 func (s *OpenapiService) Identify(ctx context.Context, in *emptypb.Empty) (*openapi_v1.IdentifyResponse, error) {
 	return &openapi_v1.IdentifyResponse{
 		Res:          util.GetV1ResultOK(),
-		PluginId:     "tkeel-hello",
-		Version:      "v0.2.0",
-		TkeelVersion: "v0.2.0",
+		PluginId:     "core-broker",
+		Version:      "v0.3.0",
+		TkeelVersion: "v0.3.0",
 	}, nil
 }
 

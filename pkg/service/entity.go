@@ -45,14 +45,14 @@ func NewEntityService() *EntityService {
 
 func (s *EntityService) Run() {
 	var entityID string
+	var msgData []byte
 	for {
 		msg := <-types.MsgChan
-		msgData, _ := msg.Data.MarshalJSON()
-
 		switch kv := msg.Data.AsInterface().(type) {
 		case map[string]interface{}:
 			subID := types.Interface2string(kv["id"])
 			entityID = types.GetEntityID(subID)
+			msgData, _ = json.Marshal(kv["properties"])
 		}
 
 		if clientMsgChan, ok := s.msgChanMap[entityID]; ok {

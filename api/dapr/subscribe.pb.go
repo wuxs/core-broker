@@ -78,7 +78,7 @@ type TopicSubscription struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Required. The name of the pubsub containing the topic below to subscribe to.
-	PubsubName string `protobuf:"bytes,1,opt,name=pubsub_name,json=pubsubName,proto3" json:"pubsubname,omitempty"`
+	PubsubName string `protobuf:"bytes,1,opt,name=pubsub_name,json=pubsubName,proto3" json:"pubsub_name,omitempty"`
 	// Required. The name of topic which will be subscribed
 	Topic string `protobuf:"bytes,2,opt,name=topic,proto3" json:"topic,omitempty"`
 	// The optional properties used for this topic's subscription e.g. session id

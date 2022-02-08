@@ -1,0 +1,171 @@
+
+syntax = "proto3";
+
+package api.subscribe.v1;
+
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "api/subscribe/v1/list.proto";
+
+option go_package = "github.com/tkeel-io/core-broker/api/subscribe/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.subscribe.v1";
+
+service Subscribe {
+    rpc SubscribeEntitiesByIDs (SubscribeEntitiesByIDsRequest) returns (SubscribeEntitiesByIDsResponse) {
+        option (google.api.http) = {
+            post : "/subscribe/{id}/entities"
+            body : "*"
+        };
+    };
+    rpc SubscribeEntitiesByGroups (SubscribeEntitiesByGroupsRequest) returns (SubscribeEntitiesByGroupsResponse) {
+        option (google.api.http) = {
+            post : "/subscribe/{id}/groups"
+            body: "*"
+        };
+    };
+    rpc SubscribeEntitiesByModels (SubscribeEntitiesByModelsRequest) returns (SubscribeEntitiesByModelsResponse) {
+        option (google.api.http) = {
+            post : "/subscribe/{id}/models"
+            body: "*"
+        };
+    };
+    rpc UnsubscribeEntitiesByIDs (UnsubscribeEntitiesByIDsRequest) returns (UnsubscribeEntitiesByIDsResponse) {
+        option (google.api.http) = {
+            post : "/subscribe/{id}/entities/delete"
+            body: "*"
+        };
+    };
+    rpc ListSubscribeEntities(ListSubscribeEntitiesRequest) returns (ListSubscribeEntitiesResponse) {
+        option (google.api.http) = {
+            post : "/subscribe/{id}/entities/list"
+            body: "*"
+        };
+    } 
+	rpc CreateSubscribe (CreateSubscribeRequest) returns (CreateSubscribeResponse) {
+		option (google.api.http) = {
+			post : "/subscribe"
+			body : "*"
+		};
+	};
+	rpc UpdateSubscribe (UpdateSubscribeRequest) returns (UpdateSubscribeResponse) {
+		option (google.api.http) = {
+			put : "/subscribe/{id}"
+			body : "*"
+		};
+	};
+	rpc DeleteSubscribe (DeleteSubscribeRequest) returns (DeleteSubscribeResponse) {
+		option (google.api.http) = {
+			delete : "/subscribe/{id}"
+		};
+	};
+	rpc GetSubscribe (GetSubscribeRequest) returns (GetSubscribeResponse) {
+		option (google.api.http) = {
+			get : "/subscribe/{id}"
+		};
+	};
+	rpc ListSubscribe (ListSubscribeRequest) returns (ListSubscribeResponse) {
+		option (google.api.http) = {
+			post : "/subscribe/list"
+            body : "*"
+		};
+	};
+}
+
+message SubscribeEntitiesByIDsRequest {
+    string id = 1;
+    repeated string entities = 2;
+}
+
+message SubscribeEntitiesByIDsResponse {
+    string id = 1;
+    string status = 2;
+}
+
+message SubscribeEntitiesByGroupsRequest {
+    string id = 1;
+    repeated string groups = 2;
+}
+
+message SubscribeEntitiesByGroupsResponse {
+    string id = 1;
+    string status = 2;
+}
+
+message SubscribeEntitiesByModelsRequest {
+    string id = 1;
+    repeated string models = 2;
+}
+
+message SubscribeEntitiesByModelsResponse {
+    string id = 1;
+    string status = 2;
+}
+
+message UnsubscribeEntitiesByIDsRequest {
+    string id = 1;
+    repeated string entities = 2;
+}
+
+message UnsubscribeEntitiesByIDsResponse {
+    string id = 1;
+    string status = 2;
+}
+
+message ListSubscribeEntitiesRequest {
+    string id = 1;
+    Pager page = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "page"}];
+}
+
+message ListSubscribeEntitiesResponse {
+
+}
+
+
+
+message SubscribeObject {
+	string id = 1;
+    string name = 2;
+    string description = 3;
+    string endpoint = 4;
+}
+
+message CreateSubscribeRequest { 
+    string name = 1;
+    string description = 2;
+
+}
+message CreateSubscribeResponse { 
+	string id = 1;
+    string name = 2;
+    string description = 3;
+    string endpoint = 4;
+}
+
+message UpdateSubscribeRequest {
+    string name = 1;
+    string description = 2;
+	string id = 3;
+}
+message UpdateSubscribeResponse {
+	string id = 1;
+    string name = 2;
+    string description = 3;
+    string endpoint = 4;
+}
+
+message DeleteSubscribeRequest { string id = 1; }
+message DeleteSubscribeResponse { string id = 1; }
+
+message GetSubscribeRequest { string id = 1;}
+message GetSubscribeResponse {
+	string id = 1;
+    string name = 2;
+    string description = 3;
+    string endpoint = 4;
+}
+
+message ListSubscribeRequest {
+
+}
+message ListSubscribeResponse { repeated SubscribeObject objList = 1; }

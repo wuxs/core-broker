@@ -1,12 +1,15 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "api/topic/topic.proto",
+    "title": "api/subscribe/v1/subscribe.proto",
     "version": "version not set"
   },
   "tags": [
     {
-      "name": "Topic"
+      "name": "Subscribe"
+    },
+    {
+      "name": "Subscribe"
     }
   ],
   "consumes": [
@@ -16,15 +19,35 @@
     "application/json"
   ],
   "paths": {
-    "/topic": {
+    "/subscribe": {
+      "get": {
+        "operationId": "Subscribe_GetSubscribe",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/daprListTopicSubscriptionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "Subscribe"
+        ]
+      },
       "post": {
-        "summary": "TopicEvent handler",
-        "operationId": "topicEventHandler",
+        "summary": "create subscribe",
+        "operationId": "createSubscribe",
         "responses": {
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/v1TopicEventResponse"
+              "$ref": "#/definitions/v1CreateSubscribeResponse"
             }
           },
           "default": {
@@ -40,17 +63,436 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1TopicEventRequest"
+              "$ref": "#/definitions/v1CreateSubscribeRequest"
             }
           }
         ],
         "tags": [
-          "TopicEvent"
+          "subscribe"
+        ]
+      }
+    },
+    "/subscribe/list": {
+      "post": {
+        "summary": "get subscribe list",
+        "operationId": "listSubscribe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1ListSubscribeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ListSubscribeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      }
+    },
+    "/subscribe/{id}": {
+      "get": {
+        "summary": "get subscribe",
+        "operationId": "getSubscribe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1GetSubscribeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      },
+      "delete": {
+        "summary": "delete subscribe",
+        "operationId": "deleteSubscribe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteSubscribeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      },
+      "put": {
+        "summary": "update subscribe",
+        "operationId": "updateSubscribe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateSubscribeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "订阅ID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "订阅名称"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "订阅描述"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      }
+    },
+    "/subscribe/{id}/entities": {
+      "post": {
+        "summary": "add subscribe entities by ids",
+        "operationId": "subscribeEntitiesByIDs",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1SubscribeEntitiesByIDsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "订阅ID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "entities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "实体id列表"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      }
+    },
+    "/subscribe/{id}/entities/delete": {
+      "post": {
+        "summary": "delete subscribe entities by ids",
+        "operationId": "unsubscribeEntitiesByIDs",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1UnsubscribeEntitiesByIDsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "订阅ID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "entities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "订阅ID"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      }
+    },
+    "/subscribe/{id}/entities/list": {
+      "post": {
+        "summary": "get subscribe entities list",
+        "operationId": "listSubscribeEntities",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1ListSubscribeEntitiesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "订阅ID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "page": {
+                  "$ref": "#/definitions/v1Pager",
+                  "description": "page"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      }
+    },
+    "/subscribe/{id}/groups": {
+      "post": {
+        "summary": "add subscribe entities by groups",
+        "operationId": "subscribeEntitiesByGroups",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1SubscribeEntitiesByGroupsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "订阅ID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "groups": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      }
+    },
+    "/subscribe/{id}/models": {
+      "post": {
+        "summary": "add subscribe entities by models",
+        "operationId": "subscribeEntitiesByModels",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1SubscribeEntitiesByModelsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "订阅ID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "models": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
         ]
       }
     }
   },
   "definitions": {
+    "daprListTopicSubscriptionsResponse": {
+      "type": "object",
+      "properties": {
+        "subscriptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/daprTopicSubscription"
+          },
+          "description": "The list of topics."
+        }
+      },
+      "description": "ListTopicSubscriptionsResponse is the message including the list of the subscribing topics."
+    },
+    "daprTopicSubscription": {
+      "type": "object",
+      "properties": {
+        "pubsub_name": {
+          "type": "string",
+          "description": "Required. The name of the pubsub containing the topic below to subscribe to."
+        },
+        "topic": {
+          "type": "string",
+          "title": "Required. The name of topic which will be subscribed"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "The optional properties used for this topic's subscription e.g. session id"
+        },
+        "route": {
+          "type": "string",
+          "description": "The optional routing rules to match against. In the gRPC interface, OnTopicEvent\nis still invoked but the matching path is sent in the TopicEventRequest."
+        }
+      },
+      "description": "TopicSubscription represents topic and metadata."
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -59,14 +501,6 @@
         }
       },
       "additionalProperties": {}
-    },
-    "protobufNullValue": {
-      "type": "string",
-      "enum": [
-        "NULL_VALUE"
-      ],
-      "default": "NULL_VALUE",
-      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\n The JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
     },
     "rpcStatus": {
       "type": "object",
@@ -86,46 +520,190 @@
         }
       }
     },
-    "v1TopicEventRequest": {
+    "v1CreateSubscribeRequest": {
       "type": "object",
       "properties": {
-        "id": {
+        "name": {
           "type": "string"
         },
-        "specversion": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        },
-        "source": {
-          "type": "string"
-        },
-        "datacontenttype": {
-          "type": "string"
-        },
-        "data": {
-          "type": "object"
-        },
-        "data_base64": {
-          "type": "string"
-        },
-        "subject": {
-          "type": "string"
-        },
-        "topic": {
-          "type": "string"
-        },
-        "pubsubname": {
+        "description": {
           "type": "string"
         }
       }
     },
-    "v1TopicEventResponse": {
+    "v1CreateSubscribeResponse": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "string",
+          "description": "订阅ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "订阅名称"
+        },
+        "description": {
+          "type": "string",
+          "description": "订阅描述"
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "订阅endpoint"
+        }
+      }
+    },
+    "v1DeleteSubscribeResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "v1GetSubscribeResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "订阅ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "订阅名称"
+        },
+        "description": {
+          "type": "string",
+          "description": "订阅描述"
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "订阅endpoint"
+        }
+      }
+    },
+    "v1ListSubscribeEntitiesResponse": {
+      "type": "object"
+    },
+    "v1ListSubscribeRequest": {
+      "type": "object"
+    },
+    "v1ListSubscribeResponse": {
+      "type": "object",
+      "properties": {
+        "objList": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1SubscribeObject"
+          }
+        }
+      }
+    },
+    "v1Pager": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "string",
+          "format": "int64"
+        },
+        "offset": {
+          "type": "string",
+          "format": "int64"
+        },
+        "sort": {
+          "type": "string"
+        },
+        "reverse": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1SubscribeEntitiesByGroupsResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "订阅ID"
+        },
         "status": {
           "type": "string"
+        }
+      }
+    },
+    "v1SubscribeEntitiesByIDsResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "订阅ID"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "v1SubscribeEntitiesByModelsResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "订阅ID"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "v1SubscribeObject": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "订阅ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "订阅名称"
+        },
+        "description": {
+          "type": "string",
+          "description": "订阅描述"
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "订阅endpoint"
+        }
+      }
+    },
+    "v1UnsubscribeEntitiesByIDsResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "订阅ID"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "v1UpdateSubscribeResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "订阅ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "订阅名称"
+        },
+        "description": {
+          "type": "string",
+          "description": "订阅描述"
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "订阅endpoint"
         }
       }
     }

@@ -5,17 +5,26 @@ import (
 	"fmt"
 
 	pb "github.com/tkeel-io/core-broker/api/subscribe/v1"
+	"github.com/tkeel-io/kit/log"
 )
 
 type SubscribeService struct {
 	pb.UnimplementedSubscribeServer
+	client *CoreClient
 }
 
 func NewSubscribeService() *SubscribeService {
-	return &SubscribeService{}
+	return &SubscribeService{client: NewCoreClient()}
 }
 
 func (s *SubscribeService) SubscribeEntitiesByIDs(ctx context.Context, req *pb.SubscribeEntitiesByIDsRequest) (*pb.SubscribeEntitiesByIDsResponse, error) {
+	//1. verify Authentication in header and get user token map
+	tm, err := s.client.GetTokenMap(ctx)
+	if nil != err {
+		log.Debug("err:", err)
+		return nil, err
+	}
+	fmt.Println(tm)
 	fmt.Println("entities: ", req.Entities)
 	resp := &pb.SubscribeEntitiesByIDsResponse{}
 	resp.Id = req.Id
@@ -45,6 +54,13 @@ func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.Li
 	return resp, nil
 }
 func (s *SubscribeService) CreateSubscribe(ctx context.Context, req *pb.CreateSubscribeRequest) (*pb.CreateSubscribeResponse, error) {
+	//1. verify Authentication in header and get user token map
+	tm, err := s.client.GetTokenMap(ctx)
+	if nil != err {
+		log.Debug("err:", err)
+		return nil, err
+	}
+	fmt.Println(tm)
 	fmt.Println(req.Name)
 	fmt.Println(req.Description)
 	resp := &pb.CreateSubscribeResponse{}

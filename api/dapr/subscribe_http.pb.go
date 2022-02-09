@@ -57,7 +57,6 @@ func (h *SubscribeHTTPHandler) GetSubscribe(req *go_restful.Request, resp *go_re
 			result.Set(httpCode, tErr.Message, out), "application/json")
 		return
 	}
-	resp.WriteHeader(http.StatusOK)
 	resp.WriteAsJson(out.GetSubscriptions())
 }
 

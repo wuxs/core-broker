@@ -6,12 +6,10 @@ package v1
 
 import (
 	context "context"
+	json "encoding/json"
 	go_restful "github.com/emicklei/go-restful"
 	errors "github.com/tkeel-io/kit/errors"
-	result "github.com/tkeel-io/kit/result"
 	v1 "github.com/tkeel-io/tkeel-interface/openapi/v1"
-	protojson "google.golang.org/protobuf/encoding/protojson"
-	anypb "google.golang.org/protobuf/types/known/anypb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	http "net/http"
 )
@@ -20,13 +18,7 @@ import transportHTTP "github.com/tkeel-io/kit/transport/http"
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the tkeel package it is being compiled against.
-// import package.context.http.anypb.result.protojson.go_restful.errors.emptypb.
-
-var (
-	_ = protojson.MarshalOptions{}
-	_ = anypb.Any{}
-	_ = emptypb.Empty{}
-)
+// import package.context.http.go_restful.json.errors.
 
 type OpenapiHTTPServer interface {
 	AddonsIdentify(context.Context, *v1.AddonsIdentifyRequest) (*v1.AddonsIdentifyResponse, error)
@@ -47,8 +39,7 @@ func newOpenapiHTTPHandler(s OpenapiHTTPServer) *OpenapiHTTPHandler {
 func (h *OpenapiHTTPHandler) AddonsIdentify(req *go_restful.Request, resp *go_restful.Response) {
 	in := v1.AddonsIdentifyRequest{}
 	if err := transportHTTP.GetBody(req, &in); err != nil {
-		resp.WriteHeaderAndJson(http.StatusBadRequest,
-			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
+		resp.WriteErrorString(http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -58,18 +49,26 @@ func (h *OpenapiHTTPHandler) AddonsIdentify(req *go_restful.Request, resp *go_re
 	if err != nil {
 		tErr := errors.FromError(err)
 		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
-		resp.WriteHeaderAndJson(httpCode,
-			result.Set(httpCode, tErr.Message, out), "application/json")
+		resp.WriteErrorString(httpCode, tErr.Message)
 		return
 	}
-	resp.WriteHeaderAndJson(http.StatusOK, out, "application/json")
+
+	result, err := json.Marshal(out)
+	if err != nil {
+		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		return
+	}
+	_, err = resp.Write(result)
+	if err != nil {
+		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		return
+	}
 }
 
 func (h *OpenapiHTTPHandler) Identify(req *go_restful.Request, resp *go_restful.Response) {
 	in := emptypb.Empty{}
 	if err := transportHTTP.GetQuery(req, &in); err != nil {
-		resp.WriteHeaderAndJson(http.StatusBadRequest,
-			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
+		resp.WriteErrorString(http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -79,18 +78,26 @@ func (h *OpenapiHTTPHandler) Identify(req *go_restful.Request, resp *go_restful.
 	if err != nil {
 		tErr := errors.FromError(err)
 		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
-		resp.WriteHeaderAndJson(httpCode,
-			result.Set(httpCode, tErr.Message, out), "application/json")
+		resp.WriteErrorString(httpCode, tErr.Message)
 		return
 	}
-	resp.WriteHeaderAndJson(http.StatusOK, out, "application/json")
+
+	result, err := json.Marshal(out)
+	if err != nil {
+		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		return
+	}
+	_, err = resp.Write(result)
+	if err != nil {
+		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		return
+	}
 }
 
 func (h *OpenapiHTTPHandler) Status(req *go_restful.Request, resp *go_restful.Response) {
 	in := emptypb.Empty{}
 	if err := transportHTTP.GetQuery(req, &in); err != nil {
-		resp.WriteHeaderAndJson(http.StatusBadRequest,
-			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
+		resp.WriteErrorString(http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -100,18 +107,26 @@ func (h *OpenapiHTTPHandler) Status(req *go_restful.Request, resp *go_restful.Re
 	if err != nil {
 		tErr := errors.FromError(err)
 		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
-		resp.WriteHeaderAndJson(httpCode,
-			result.Set(httpCode, tErr.Message, out), "application/json")
+		resp.WriteErrorString(httpCode, tErr.Message)
 		return
 	}
-	resp.WriteHeaderAndJson(http.StatusOK, out, "application/json")
+
+	result, err := json.Marshal(out)
+	if err != nil {
+		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		return
+	}
+	_, err = resp.Write(result)
+	if err != nil {
+		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		return
+	}
 }
 
 func (h *OpenapiHTTPHandler) TenantDisable(req *go_restful.Request, resp *go_restful.Response) {
 	in := v1.TenantDisableRequest{}
 	if err := transportHTTP.GetBody(req, &in); err != nil {
-		resp.WriteHeaderAndJson(http.StatusBadRequest,
-			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
+		resp.WriteErrorString(http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -121,18 +136,26 @@ func (h *OpenapiHTTPHandler) TenantDisable(req *go_restful.Request, resp *go_res
 	if err != nil {
 		tErr := errors.FromError(err)
 		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
-		resp.WriteHeaderAndJson(httpCode,
-			result.Set(httpCode, tErr.Message, out), "application/json")
+		resp.WriteErrorString(httpCode, tErr.Message)
 		return
 	}
-	resp.WriteHeaderAndJson(http.StatusOK, out, "application/json")
+
+	result, err := json.Marshal(out)
+	if err != nil {
+		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		return
+	}
+	_, err = resp.Write(result)
+	if err != nil {
+		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		return
+	}
 }
 
 func (h *OpenapiHTTPHandler) TenantEnable(req *go_restful.Request, resp *go_restful.Response) {
 	in := v1.TenantEnableRequest{}
 	if err := transportHTTP.GetBody(req, &in); err != nil {
-		resp.WriteHeaderAndJson(http.StatusBadRequest,
-			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
+		resp.WriteErrorString(http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -142,11 +165,20 @@ func (h *OpenapiHTTPHandler) TenantEnable(req *go_restful.Request, resp *go_rest
 	if err != nil {
 		tErr := errors.FromError(err)
 		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
-		resp.WriteHeaderAndJson(httpCode,
-			result.Set(httpCode, tErr.Message, out), "application/json")
+		resp.WriteErrorString(httpCode, tErr.Message)
 		return
 	}
-	resp.WriteHeaderAndJson(http.StatusOK, out, "application/json")
+
+	result, err := json.Marshal(out)
+	if err != nil {
+		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		return
+	}
+	_, err = resp.Write(result)
+	if err != nil {
+		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		return
+	}
 }
 
 func RegisterOpenapiHTTPServer(container *go_restful.Container, srv OpenapiHTTPServer) {

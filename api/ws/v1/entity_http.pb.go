@@ -5,15 +5,21 @@
 package v1
 
 import (
+	context "context"
+	json "encoding/json"
 	go_restful "github.com/emicklei/go-restful"
+	errors "github.com/tkeel-io/kit/errors"
+	http "net/http"
 )
+
+import transportHTTP "github.com/tkeel-io/kit/transport/http"
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the tkeel package it is being compiled against.
-// import package.context.http.reflect.go_restful.json.errors.emptypb.
+// import package.context.http.go_restful.json.errors.
 
 type EntityHTTPServer interface {
-	GetEntity(req *go_restful.Request, resp *go_restful.Response)
+	GetEntity(context.Context, *GetEntityRequest) (*GetEntityResponse, error)
 }
 
 type EntityHTTPHandler struct {
@@ -25,7 +31,32 @@ func newEntityHTTPHandler(s EntityHTTPServer) *EntityHTTPHandler {
 }
 
 func (h *EntityHTTPHandler) GetEntity(req *go_restful.Request, resp *go_restful.Response) {
-	h.srv.GetEntity(req, resp)
+	in := GetEntityRequest{}
+	if err := transportHTTP.GetQuery(req, &in); err != nil {
+		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	ctx := transportHTTP.ContextWithHeader(req.Request.Context(), req.Request.Header)
+
+	out, err := h.srv.GetEntity(ctx, &in)
+	if err != nil {
+		tErr := errors.FromError(err)
+		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
+		resp.WriteErrorString(httpCode, tErr.Message)
+		return
+	}
+
+	result, err := json.Marshal(out)
+	if err != nil {
+		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		return
+	}
+	_, err = resp.Write(result)
+	if err != nil {
+		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		return
+	}
 }
 
 func RegisterEntityHTTPServer(container *go_restful.Container, srv EntityHTTPServer) {

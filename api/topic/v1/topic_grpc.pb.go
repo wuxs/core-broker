@@ -97,5 +97,5 @@ var Topic_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/topic/topic.proto",
+	Metadata: "api/topic/v1/topic.proto",
 }

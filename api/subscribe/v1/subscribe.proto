@@ -1,4 +1,3 @@
-
 syntax = "proto3";
 
 package api.subscribe.v1;
@@ -183,22 +182,22 @@ service Subscribe {
 }
 
 message SubscribeEntitiesByIDsRequest {
-    string id = 1  [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
+    uint64 id = 1  [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
     repeated string entities = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "实体id列表"}];
 }
 
 message SubscribeEntitiesByIDsResponse {
-    string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
+    uint64 id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
     string status = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅状态"}];
 }
 
 message SubscribeEntitiesByGroupsRequest {
-    string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
+    uint64 id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
     repeated string groups = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "实体组列表"}];
 }
 
 message SubscribeEntitiesByGroupsResponse {
-    string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
+    uint64 id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
     string status = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅状态"}];
 }
 
@@ -213,12 +212,12 @@ message SubscribeEntitiesByModelsResponse {
 }
 
 message UnsubscribeEntitiesByIDsRequest {
-    string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
+    uint64 id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
     repeated string entities = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
 }
 
 message UnsubscribeEntitiesByIDsResponse {
-    string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
+    uint64 id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
     string status = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅状态"}];
 }
 
@@ -232,31 +231,31 @@ message ListSubscribeEntitiesResponse {
 }
 
 message SubscribeObject {
-	string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
+    uint64 id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
     string name = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅名称"}];
     string description = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅描述"}];
     string endpoint = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅endpoint"}];
 }
 
 message CreateSubscribeRequest { 
-    string name = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅名称"}];
-    string description = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅描述"}];
+    string title = 1        [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅名称"}];
+    string description = 2  [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅描述"}];
 
 }
-message CreateSubscribeResponse { 
-	string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
-    string name = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅名称"}];
-    string description = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅描述"}];
-    string endpoint = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅endpoint"}];
+message CreateSubscribeResponse {
+    uint64 id = 1           [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
+    string title = 2        [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅名称"}];
+    string description = 3  [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅描述"}];
+    string endpoint = 4     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅endpoint"}];
 }
 
 message UpdateSubscribeRequest {
     string name = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅名称"}];
     string description = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅描述"}];
-	string id = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
+    uint64 id = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
 }
 message UpdateSubscribeResponse {
-	string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
+    uint64 id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
     string name = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅名称"}];
     string description = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅描述"}];
     string endpoint = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅endpoint"}];

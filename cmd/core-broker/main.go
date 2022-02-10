@@ -31,7 +31,8 @@ import (
 
 	// User import.
 
-	Subscribe_v1 "github.com/tkeel-io/core-broker/api/dapr"
+	Dapr_v1 "github.com/tkeel-io/core-broker/api/dapr"
+	Subscribe_v1 "github.com/tkeel-io/core-broker/api/subscribe/v1"
 	Topic_v1 "github.com/tkeel-io/core-broker/api/topic/v1"
 	Entity_v1 "github.com/tkeel-io/core-broker/api/ws/v1"
 
@@ -81,6 +82,10 @@ func main() {
 		TopicSrv := service.NewTopicService()
 		Topic_v1.RegisterTopicHTTPServer(httpSrv.Container, TopicSrv)
 		Topic_v1.RegisterTopicServer(grpcSrv.GetServe(), TopicSrv)
+
+		DaprSubscribeSrv := service.NewDaprSubscribeService()
+		Dapr_v1.RegisterSubscribeHTTPServer(httpSrv.Container, DaprSubscribeSrv)
+		Dapr_v1.RegisterSubscribeServer(grpcSrv.GetServe(), DaprSubscribeSrv)
 
 		SubscribeSrv := service.NewSubscribeService()
 		Subscribe_v1.RegisterSubscribeHTTPServer(httpSrv.Container, SubscribeSrv)

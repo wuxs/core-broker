@@ -21,14 +21,29 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OpenapiClient interface {
 	// Query identify.
+	// TKEEL_COMMENT
+	// {"response":{"raw_data":true}}
 	Identify(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*v1.IdentifyResponse, error)
 	// Post addons identify.
+	// TKEEL_COMMENT
+	// {
+	//  "response" :
+	//    {
+	//      "raw_data": true
+	//    }
+	// }
 	AddonsIdentify(ctx context.Context, in *v1.AddonsIdentifyRequest, opts ...grpc.CallOption) (*v1.AddonsIdentifyResponse, error)
-	// Post tenant bind.
-	TenantBind(ctx context.Context, in *v1.TenantBindRequst, opts ...grpc.CallOption) (*v1.TenantBindResponse, error)
-	// Post tenant bind.
-	TenantUnbind(ctx context.Context, in *v1.TenantUnbindRequst, opts ...grpc.CallOption) (*v1.TenantUnbindResponse, error)
+	// Post tenant able.
+	// TKEEL_COMMENT
+	// {"response":{"raw_data":true}}
+	TenantEnable(ctx context.Context, in *v1.TenantEnableRequest, opts ...grpc.CallOption) (*v1.TenantEnableResponse, error)
+	// Post tenant disable.
+	// TKEEL_COMMENT
+	// {"response":{"raw_data":true}}
+	TenantDisable(ctx context.Context, in *v1.TenantDisableRequest, opts ...grpc.CallOption) (*v1.TenantDisableResponse, error)
 	// Query status.
+	// TKEEL_COMMENT
+	// {"response":{"raw_data":true}}
 	Status(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*v1.StatusResponse, error)
 }
 
@@ -58,18 +73,18 @@ func (c *openapiClient) AddonsIdentify(ctx context.Context, in *v1.AddonsIdentif
 	return out, nil
 }
 
-func (c *openapiClient) TenantBind(ctx context.Context, in *v1.TenantBindRequst, opts ...grpc.CallOption) (*v1.TenantBindResponse, error) {
-	out := new(v1.TenantBindResponse)
-	err := c.cc.Invoke(ctx, "/openapi.v1.Openapi/TenantBind", in, out, opts...)
+func (c *openapiClient) TenantEnable(ctx context.Context, in *v1.TenantEnableRequest, opts ...grpc.CallOption) (*v1.TenantEnableResponse, error) {
+	out := new(v1.TenantEnableResponse)
+	err := c.cc.Invoke(ctx, "/openapi.v1.Openapi/TenantEnable", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *openapiClient) TenantUnbind(ctx context.Context, in *v1.TenantUnbindRequst, opts ...grpc.CallOption) (*v1.TenantUnbindResponse, error) {
-	out := new(v1.TenantUnbindResponse)
-	err := c.cc.Invoke(ctx, "/openapi.v1.Openapi/TenantUnbind", in, out, opts...)
+func (c *openapiClient) TenantDisable(ctx context.Context, in *v1.TenantDisableRequest, opts ...grpc.CallOption) (*v1.TenantDisableResponse, error) {
+	out := new(v1.TenantDisableResponse)
+	err := c.cc.Invoke(ctx, "/openapi.v1.Openapi/TenantDisable", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -90,14 +105,29 @@ func (c *openapiClient) Status(ctx context.Context, in *emptypb.Empty, opts ...g
 // for forward compatibility
 type OpenapiServer interface {
 	// Query identify.
+	// TKEEL_COMMENT
+	// {"response":{"raw_data":true}}
 	Identify(context.Context, *emptypb.Empty) (*v1.IdentifyResponse, error)
 	// Post addons identify.
+	// TKEEL_COMMENT
+	// {
+	//  "response" :
+	//    {
+	//      "raw_data": true
+	//    }
+	// }
 	AddonsIdentify(context.Context, *v1.AddonsIdentifyRequest) (*v1.AddonsIdentifyResponse, error)
-	// Post tenant bind.
-	TenantBind(context.Context, *v1.TenantBindRequst) (*v1.TenantBindResponse, error)
-	// Post tenant bind.
-	TenantUnbind(context.Context, *v1.TenantUnbindRequst) (*v1.TenantUnbindResponse, error)
+	// Post tenant able.
+	// TKEEL_COMMENT
+	// {"response":{"raw_data":true}}
+	TenantEnable(context.Context, *v1.TenantEnableRequest) (*v1.TenantEnableResponse, error)
+	// Post tenant disable.
+	// TKEEL_COMMENT
+	// {"response":{"raw_data":true}}
+	TenantDisable(context.Context, *v1.TenantDisableRequest) (*v1.TenantDisableResponse, error)
 	// Query status.
+	// TKEEL_COMMENT
+	// {"response":{"raw_data":true}}
 	Status(context.Context, *emptypb.Empty) (*v1.StatusResponse, error)
 	mustEmbedUnimplementedOpenapiServer()
 }
@@ -112,11 +142,11 @@ func (UnimplementedOpenapiServer) Identify(context.Context, *emptypb.Empty) (*v1
 func (UnimplementedOpenapiServer) AddonsIdentify(context.Context, *v1.AddonsIdentifyRequest) (*v1.AddonsIdentifyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddonsIdentify not implemented")
 }
-func (UnimplementedOpenapiServer) TenantBind(context.Context, *v1.TenantBindRequst) (*v1.TenantBindResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method TenantBind not implemented")
+func (UnimplementedOpenapiServer) TenantEnable(context.Context, *v1.TenantEnableRequest) (*v1.TenantEnableResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TenantEnable not implemented")
 }
-func (UnimplementedOpenapiServer) TenantUnbind(context.Context, *v1.TenantUnbindRequst) (*v1.TenantUnbindResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method TenantUnbind not implemented")
+func (UnimplementedOpenapiServer) TenantDisable(context.Context, *v1.TenantDisableRequest) (*v1.TenantDisableResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TenantDisable not implemented")
 }
 func (UnimplementedOpenapiServer) Status(context.Context, *emptypb.Empty) (*v1.StatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Status not implemented")
@@ -170,38 +200,38 @@ func _Openapi_AddonsIdentify_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Openapi_TenantBind_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1.TenantBindRequst)
+func _Openapi_TenantEnable_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.TenantEnableRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OpenapiServer).TenantBind(ctx, in)
+		return srv.(OpenapiServer).TenantEnable(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/openapi.v1.Openapi/TenantBind",
+		FullMethod: "/openapi.v1.Openapi/TenantEnable",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OpenapiServer).TenantBind(ctx, req.(*v1.TenantBindRequst))
+		return srv.(OpenapiServer).TenantEnable(ctx, req.(*v1.TenantEnableRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Openapi_TenantUnbind_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1.TenantUnbindRequst)
+func _Openapi_TenantDisable_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.TenantDisableRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OpenapiServer).TenantUnbind(ctx, in)
+		return srv.(OpenapiServer).TenantDisable(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/openapi.v1.Openapi/TenantUnbind",
+		FullMethod: "/openapi.v1.Openapi/TenantDisable",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OpenapiServer).TenantUnbind(ctx, req.(*v1.TenantUnbindRequst))
+		return srv.(OpenapiServer).TenantDisable(ctx, req.(*v1.TenantDisableRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -240,12 +270,12 @@ var Openapi_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Openapi_AddonsIdentify_Handler,
 		},
 		{
-			MethodName: "TenantBind",
-			Handler:    _Openapi_TenantBind_Handler,
+			MethodName: "TenantEnable",
+			Handler:    _Openapi_TenantEnable_Handler,
 		},
 		{
-			MethodName: "TenantUnbind",
-			Handler:    _Openapi_TenantUnbind_Handler,
+			MethodName: "TenantDisable",
+			Handler:    _Openapi_TenantDisable_Handler,
 		},
 		{
 			MethodName: "Status",

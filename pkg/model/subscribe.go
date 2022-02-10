@@ -2,6 +2,7 @@ package model
 
 import (
 	"github.com/tkeel-io/core-broker/pkg/util"
+	"github.com/tkeel-io/kit/log"
 	"gorm.io/gorm"
 )
 
@@ -18,6 +19,20 @@ func (s *Subscribe) BeforeCreate(tx *gorm.DB) error {
 		s.Endpoint = util.GenerateSubscribeEndpoint()
 	}
 	return nil
+}
+
+func (s Subscribe) AfterDelete(tx *gorm.DB) error {
+	destroyEndpoint(s.Endpoint)
+	destroyRelevant()
+	return nil
+}
+
+func destroyEndpoint(endpoint string) {
+	log.Debug("endpoint: %s", endpoint)
+}
+
+func destroyRelevant() {
+	log.Debug("destroyRelevant")
 }
 
 type SubscribeEntities struct {

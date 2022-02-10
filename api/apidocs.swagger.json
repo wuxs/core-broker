@@ -217,7 +217,8 @@
             "description": "订阅ID",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -247,7 +248,8 @@
             "description": "订阅ID",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -287,7 +289,7 @@
             "schema": {
               "type": "object",
               "properties": {
-                "name": {
+                "title": {
                   "type": "string",
                   "description": "订阅名称"
                 },
@@ -428,7 +430,8 @@
             "description": "订阅ID",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "uint64"
           },
           {
             "name": "body",
@@ -437,11 +440,43 @@
             "schema": {
               "type": "object",
               "properties": {
-                "page": {
-                  "$ref": "#/definitions/v1Pager",
-                  "description": "page"
+                "page_num": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Page number",
+                  "required": [
+                    "page_num"
+                  ]
+                },
+                "page_size": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Page size",
+                  "required": [
+                    "page_size"
+                  ]
+                },
+                "order_by": {
+                  "type": "string",
+                  "description": "Order by"
+                },
+                "is_descending": {
+                  "type": "boolean",
+                  "description": "Is descending"
+                },
+                "key_words": {
+                  "type": "string",
+                  "description": "Key words"
+                },
+                "search_key": {
+                  "type": "string",
+                  "description": "Search Key"
                 }
-              }
+              },
+              "required": [
+                "page_num",
+                "page_size"
+              ]
             }
           }
         ],
@@ -524,7 +559,8 @@
             "description": "订阅ID",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "uint64"
           },
           {
             "name": "body",
@@ -860,7 +896,37 @@
       "properties": {
         "id": {
           "type": "string",
+          "format": "uint64",
           "description": "订阅ID"
+        }
+      }
+    },
+    "v1Entity": {
+      "type": "object",
+      "properties": {
+        "ID": {
+          "type": "string",
+          "description": "entity id"
+        },
+        "name": {
+          "type": "string",
+          "description": "name"
+        },
+        "status": {
+          "type": "string",
+          "description": "status"
+        },
+        "template": {
+          "type": "string",
+          "description": "template"
+        },
+        "group": {
+          "type": "string",
+          "description": "group"
+        },
+        "updated_at": {
+          "type": "string",
+          "description": "update time"
         }
       }
     },
@@ -872,9 +938,10 @@
       "properties": {
         "id": {
           "type": "string",
+          "format": "uint64",
           "description": "订阅ID"
         },
-        "name": {
+        "title": {
           "type": "string",
           "description": "订阅名称"
         },
@@ -885,6 +952,11 @@
         "endpoint": {
           "type": "string",
           "description": "订阅endpoint"
+        },
+        "count": {
+          "type": "string",
+          "format": "uint64",
+          "description": "订阅数量"
         }
       }
     },
@@ -952,40 +1024,144 @@
       "description": "*\nmessage plugin implemented other plugin."
     },
     "v1ListSubscribeEntitiesResponse": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Total",
+          "required": [
+            "total"
+          ]
+        },
+        "page_num": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Page number",
+          "required": [
+            "page_num"
+          ]
+        },
+        "last_page": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Last page",
+          "required": [
+            "last_page"
+          ]
+        },
+        "page_size": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Page size",
+          "required": [
+            "page_size"
+          ]
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Entity"
+          },
+          "description": "订阅实体"
+        }
+      },
+      "required": [
+        "total",
+        "page_num",
+        "last_page",
+        "page_size"
+      ]
     },
     "v1ListSubscribeRequest": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "page_num": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Page number",
+          "required": [
+            "page_num"
+          ]
+        },
+        "page_size": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Page size",
+          "required": [
+            "page_size"
+          ]
+        },
+        "order_by": {
+          "type": "string",
+          "description": "Order by"
+        },
+        "is_descending": {
+          "type": "boolean",
+          "description": "Is descending"
+        },
+        "key_words": {
+          "type": "string",
+          "description": "Key words"
+        },
+        "search_key": {
+          "type": "string",
+          "description": "Search Key"
+        }
+      },
+      "required": [
+        "page_num",
+        "page_size"
+      ]
     },
     "v1ListSubscribeResponse": {
       "type": "object",
       "properties": {
-        "objList": {
+        "total": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Total",
+          "required": [
+            "total"
+          ]
+        },
+        "page_num": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Page number",
+          "required": [
+            "page_num"
+          ]
+        },
+        "last_page": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Last page",
+          "required": [
+            "last_page"
+          ]
+        },
+        "page_size": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Page size",
+          "required": [
+            "page_size"
+          ]
+        },
+        "data": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1SubscribeObject"
           }
         }
-      }
-    },
-    "v1Pager": {
-      "type": "object",
-      "properties": {
-        "limit": {
-          "type": "string",
-          "format": "int64"
-        },
-        "offset": {
-          "type": "string",
-          "format": "int64"
-        },
-        "sort": {
-          "type": "string"
-        },
-        "reverse": {
-          "type": "boolean"
-        }
-      }
+      },
+      "required": [
+        "total",
+        "page_num",
+        "last_page",
+        "page_size"
+      ]
     },
     "v1PluginStatus": {
       "type": "string",
@@ -1065,6 +1241,7 @@
       "properties": {
         "id": {
           "type": "string",
+          "format": "uint64",
           "description": "订阅ID"
         },
         "status": {
@@ -1081,7 +1258,7 @@
           "format": "uint64",
           "description": "订阅ID"
         },
-        "name": {
+        "title": {
           "type": "string",
           "description": "订阅名称"
         },
@@ -1204,7 +1381,7 @@
           "format": "uint64",
           "description": "订阅ID"
         },
-        "name": {
+        "title": {
           "type": "string",
           "description": "订阅名称"
         },

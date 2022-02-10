@@ -6,9 +6,12 @@ package v1
 
 import (
 	context "context"
-	json "encoding/json"
 	go_restful "github.com/emicklei/go-restful"
 	errors "github.com/tkeel-io/kit/errors"
+	result "github.com/tkeel-io/kit/result"
+	protojson "google.golang.org/protobuf/encoding/protojson"
+	anypb "google.golang.org/protobuf/types/known/anypb"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	http "net/http"
 )
 
@@ -16,7 +19,13 @@ import transportHTTP "github.com/tkeel-io/kit/transport/http"
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the tkeel package it is being compiled against.
-// import package.context.http.go_restful.json.errors.
+// import package.context.http.anypb.result.protojson.go_restful.errors.emptypb.
+
+var (
+	_ = protojson.MarshalOptions{}
+	_ = anypb.Any{}
+	_ = emptypb.Empty{}
+)
 
 type SubscribeHTTPServer interface {
 	CreateSubscribe(context.Context, *CreateSubscribeRequest) (*CreateSubscribeResponse, error)
@@ -42,7 +51,8 @@ func newSubscribeHTTPHandler(s SubscribeHTTPServer) *SubscribeHTTPHandler {
 func (h *SubscribeHTTPHandler) CreateSubscribe(req *go_restful.Request, resp *go_restful.Response) {
 	in := CreateSubscribeRequest{}
 	if err := transportHTTP.GetBody(req, &in); err != nil {
-		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
 		return
 	}
 
@@ -52,30 +62,55 @@ func (h *SubscribeHTTPHandler) CreateSubscribe(req *go_restful.Request, resp *go
 	if err != nil {
 		tErr := errors.FromError(err)
 		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
-		resp.WriteErrorString(httpCode, tErr.Message)
+		resp.WriteHeaderAndJson(httpCode,
+			result.Set(httpCode, tErr.Message, out), "application/json")
+		return
+	}
+	anyOut, err := anypb.New(out)
+	if err != nil {
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
 
-	result, err := json.Marshal(out)
+	outB, err := protojson.MarshalOptions{
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
+	}.Marshal(&result.Http{
+		Code: http.StatusOK,
+		Msg:  "ok",
+		Data: anyOut,
+	})
 	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
-	_, err = resp.Write(result)
-	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
-		return
+	resp.WriteHeader(http.StatusOK)
+
+	var remain int
+	for {
+		outB = outB[remain:]
+		remain, err = resp.Write(outB)
+		if err != nil {
+			return
+		}
+		if remain == 0 {
+			break
+		}
 	}
 }
 
 func (h *SubscribeHTTPHandler) DeleteSubscribe(req *go_restful.Request, resp *go_restful.Response) {
 	in := DeleteSubscribeRequest{}
 	if err := transportHTTP.GetQuery(req, &in); err != nil {
-		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
 		return
 	}
 	if err := transportHTTP.GetPathValue(req, &in); err != nil {
-		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
 		return
 	}
 
@@ -85,30 +120,55 @@ func (h *SubscribeHTTPHandler) DeleteSubscribe(req *go_restful.Request, resp *go
 	if err != nil {
 		tErr := errors.FromError(err)
 		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
-		resp.WriteErrorString(httpCode, tErr.Message)
+		resp.WriteHeaderAndJson(httpCode,
+			result.Set(httpCode, tErr.Message, out), "application/json")
+		return
+	}
+	anyOut, err := anypb.New(out)
+	if err != nil {
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
 
-	result, err := json.Marshal(out)
+	outB, err := protojson.MarshalOptions{
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
+	}.Marshal(&result.Http{
+		Code: http.StatusOK,
+		Msg:  "ok",
+		Data: anyOut,
+	})
 	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
-	_, err = resp.Write(result)
-	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
-		return
+	resp.WriteHeader(http.StatusOK)
+
+	var remain int
+	for {
+		outB = outB[remain:]
+		remain, err = resp.Write(outB)
+		if err != nil {
+			return
+		}
+		if remain == 0 {
+			break
+		}
 	}
 }
 
 func (h *SubscribeHTTPHandler) GetSubscribe(req *go_restful.Request, resp *go_restful.Response) {
 	in := GetSubscribeRequest{}
 	if err := transportHTTP.GetQuery(req, &in); err != nil {
-		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
 		return
 	}
 	if err := transportHTTP.GetPathValue(req, &in); err != nil {
-		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
 		return
 	}
 
@@ -118,26 +178,50 @@ func (h *SubscribeHTTPHandler) GetSubscribe(req *go_restful.Request, resp *go_re
 	if err != nil {
 		tErr := errors.FromError(err)
 		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
-		resp.WriteErrorString(httpCode, tErr.Message)
+		resp.WriteHeaderAndJson(httpCode,
+			result.Set(httpCode, tErr.Message, out), "application/json")
+		return
+	}
+	anyOut, err := anypb.New(out)
+	if err != nil {
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
 
-	result, err := json.Marshal(out)
+	outB, err := protojson.MarshalOptions{
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
+	}.Marshal(&result.Http{
+		Code: http.StatusOK,
+		Msg:  "ok",
+		Data: anyOut,
+	})
 	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
-	_, err = resp.Write(result)
-	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
-		return
+	resp.WriteHeader(http.StatusOK)
+
+	var remain int
+	for {
+		outB = outB[remain:]
+		remain, err = resp.Write(outB)
+		if err != nil {
+			return
+		}
+		if remain == 0 {
+			break
+		}
 	}
 }
 
 func (h *SubscribeHTTPHandler) ListSubscribe(req *go_restful.Request, resp *go_restful.Response) {
 	in := ListSubscribeRequest{}
 	if err := transportHTTP.GetBody(req, &in); err != nil {
-		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
 		return
 	}
 
@@ -147,30 +231,55 @@ func (h *SubscribeHTTPHandler) ListSubscribe(req *go_restful.Request, resp *go_r
 	if err != nil {
 		tErr := errors.FromError(err)
 		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
-		resp.WriteErrorString(httpCode, tErr.Message)
+		resp.WriteHeaderAndJson(httpCode,
+			result.Set(httpCode, tErr.Message, out), "application/json")
+		return
+	}
+	anyOut, err := anypb.New(out)
+	if err != nil {
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
 
-	result, err := json.Marshal(out)
+	outB, err := protojson.MarshalOptions{
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
+	}.Marshal(&result.Http{
+		Code: http.StatusOK,
+		Msg:  "ok",
+		Data: anyOut,
+	})
 	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
-	_, err = resp.Write(result)
-	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
-		return
+	resp.WriteHeader(http.StatusOK)
+
+	var remain int
+	for {
+		outB = outB[remain:]
+		remain, err = resp.Write(outB)
+		if err != nil {
+			return
+		}
+		if remain == 0 {
+			break
+		}
 	}
 }
 
 func (h *SubscribeHTTPHandler) ListSubscribeEntities(req *go_restful.Request, resp *go_restful.Response) {
 	in := ListSubscribeEntitiesRequest{}
 	if err := transportHTTP.GetBody(req, &in); err != nil {
-		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
 		return
 	}
 	if err := transportHTTP.GetPathValue(req, &in); err != nil {
-		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
 		return
 	}
 
@@ -180,30 +289,55 @@ func (h *SubscribeHTTPHandler) ListSubscribeEntities(req *go_restful.Request, re
 	if err != nil {
 		tErr := errors.FromError(err)
 		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
-		resp.WriteErrorString(httpCode, tErr.Message)
+		resp.WriteHeaderAndJson(httpCode,
+			result.Set(httpCode, tErr.Message, out), "application/json")
+		return
+	}
+	anyOut, err := anypb.New(out)
+	if err != nil {
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
 
-	result, err := json.Marshal(out)
+	outB, err := protojson.MarshalOptions{
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
+	}.Marshal(&result.Http{
+		Code: http.StatusOK,
+		Msg:  "ok",
+		Data: anyOut,
+	})
 	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
-	_, err = resp.Write(result)
-	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
-		return
+	resp.WriteHeader(http.StatusOK)
+
+	var remain int
+	for {
+		outB = outB[remain:]
+		remain, err = resp.Write(outB)
+		if err != nil {
+			return
+		}
+		if remain == 0 {
+			break
+		}
 	}
 }
 
 func (h *SubscribeHTTPHandler) SubscribeEntitiesByGroups(req *go_restful.Request, resp *go_restful.Response) {
 	in := SubscribeEntitiesByGroupsRequest{}
 	if err := transportHTTP.GetBody(req, &in); err != nil {
-		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
 		return
 	}
 	if err := transportHTTP.GetPathValue(req, &in); err != nil {
-		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
 		return
 	}
 
@@ -213,30 +347,55 @@ func (h *SubscribeHTTPHandler) SubscribeEntitiesByGroups(req *go_restful.Request
 	if err != nil {
 		tErr := errors.FromError(err)
 		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
-		resp.WriteErrorString(httpCode, tErr.Message)
+		resp.WriteHeaderAndJson(httpCode,
+			result.Set(httpCode, tErr.Message, out), "application/json")
+		return
+	}
+	anyOut, err := anypb.New(out)
+	if err != nil {
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
 
-	result, err := json.Marshal(out)
+	outB, err := protojson.MarshalOptions{
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
+	}.Marshal(&result.Http{
+		Code: http.StatusOK,
+		Msg:  "ok",
+		Data: anyOut,
+	})
 	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
-	_, err = resp.Write(result)
-	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
-		return
+	resp.WriteHeader(http.StatusOK)
+
+	var remain int
+	for {
+		outB = outB[remain:]
+		remain, err = resp.Write(outB)
+		if err != nil {
+			return
+		}
+		if remain == 0 {
+			break
+		}
 	}
 }
 
 func (h *SubscribeHTTPHandler) SubscribeEntitiesByIDs(req *go_restful.Request, resp *go_restful.Response) {
 	in := SubscribeEntitiesByIDsRequest{}
 	if err := transportHTTP.GetBody(req, &in); err != nil {
-		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
 		return
 	}
 	if err := transportHTTP.GetPathValue(req, &in); err != nil {
-		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
 		return
 	}
 
@@ -246,30 +405,55 @@ func (h *SubscribeHTTPHandler) SubscribeEntitiesByIDs(req *go_restful.Request, r
 	if err != nil {
 		tErr := errors.FromError(err)
 		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
-		resp.WriteErrorString(httpCode, tErr.Message)
+		resp.WriteHeaderAndJson(httpCode,
+			result.Set(httpCode, tErr.Message, out), "application/json")
+		return
+	}
+	anyOut, err := anypb.New(out)
+	if err != nil {
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
 
-	result, err := json.Marshal(out)
+	outB, err := protojson.MarshalOptions{
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
+	}.Marshal(&result.Http{
+		Code: http.StatusOK,
+		Msg:  "ok",
+		Data: anyOut,
+	})
 	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
-	_, err = resp.Write(result)
-	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
-		return
+	resp.WriteHeader(http.StatusOK)
+
+	var remain int
+	for {
+		outB = outB[remain:]
+		remain, err = resp.Write(outB)
+		if err != nil {
+			return
+		}
+		if remain == 0 {
+			break
+		}
 	}
 }
 
 func (h *SubscribeHTTPHandler) SubscribeEntitiesByModels(req *go_restful.Request, resp *go_restful.Response) {
 	in := SubscribeEntitiesByModelsRequest{}
 	if err := transportHTTP.GetBody(req, &in); err != nil {
-		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
 		return
 	}
 	if err := transportHTTP.GetPathValue(req, &in); err != nil {
-		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
 		return
 	}
 
@@ -279,30 +463,55 @@ func (h *SubscribeHTTPHandler) SubscribeEntitiesByModels(req *go_restful.Request
 	if err != nil {
 		tErr := errors.FromError(err)
 		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
-		resp.WriteErrorString(httpCode, tErr.Message)
+		resp.WriteHeaderAndJson(httpCode,
+			result.Set(httpCode, tErr.Message, out), "application/json")
+		return
+	}
+	anyOut, err := anypb.New(out)
+	if err != nil {
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
 
-	result, err := json.Marshal(out)
+	outB, err := protojson.MarshalOptions{
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
+	}.Marshal(&result.Http{
+		Code: http.StatusOK,
+		Msg:  "ok",
+		Data: anyOut,
+	})
 	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
-	_, err = resp.Write(result)
-	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
-		return
+	resp.WriteHeader(http.StatusOK)
+
+	var remain int
+	for {
+		outB = outB[remain:]
+		remain, err = resp.Write(outB)
+		if err != nil {
+			return
+		}
+		if remain == 0 {
+			break
+		}
 	}
 }
 
 func (h *SubscribeHTTPHandler) UnsubscribeEntitiesByIDs(req *go_restful.Request, resp *go_restful.Response) {
 	in := UnsubscribeEntitiesByIDsRequest{}
 	if err := transportHTTP.GetBody(req, &in); err != nil {
-		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
 		return
 	}
 	if err := transportHTTP.GetPathValue(req, &in); err != nil {
-		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
 		return
 	}
 
@@ -312,30 +521,55 @@ func (h *SubscribeHTTPHandler) UnsubscribeEntitiesByIDs(req *go_restful.Request,
 	if err != nil {
 		tErr := errors.FromError(err)
 		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
-		resp.WriteErrorString(httpCode, tErr.Message)
+		resp.WriteHeaderAndJson(httpCode,
+			result.Set(httpCode, tErr.Message, out), "application/json")
+		return
+	}
+	anyOut, err := anypb.New(out)
+	if err != nil {
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
 
-	result, err := json.Marshal(out)
+	outB, err := protojson.MarshalOptions{
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
+	}.Marshal(&result.Http{
+		Code: http.StatusOK,
+		Msg:  "ok",
+		Data: anyOut,
+	})
 	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
-	_, err = resp.Write(result)
-	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
-		return
+	resp.WriteHeader(http.StatusOK)
+
+	var remain int
+	for {
+		outB = outB[remain:]
+		remain, err = resp.Write(outB)
+		if err != nil {
+			return
+		}
+		if remain == 0 {
+			break
+		}
 	}
 }
 
 func (h *SubscribeHTTPHandler) UpdateSubscribe(req *go_restful.Request, resp *go_restful.Response) {
 	in := UpdateSubscribeRequest{}
 	if err := transportHTTP.GetBody(req, &in); err != nil {
-		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
 		return
 	}
 	if err := transportHTTP.GetPathValue(req, &in); err != nil {
-		resp.WriteErrorString(http.StatusBadRequest, err.Error())
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
 		return
 	}
 
@@ -345,19 +579,42 @@ func (h *SubscribeHTTPHandler) UpdateSubscribe(req *go_restful.Request, resp *go
 	if err != nil {
 		tErr := errors.FromError(err)
 		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
-		resp.WriteErrorString(httpCode, tErr.Message)
+		resp.WriteHeaderAndJson(httpCode,
+			result.Set(httpCode, tErr.Message, out), "application/json")
+		return
+	}
+	anyOut, err := anypb.New(out)
+	if err != nil {
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
 
-	result, err := json.Marshal(out)
+	outB, err := protojson.MarshalOptions{
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
+	}.Marshal(&result.Http{
+		Code: http.StatusOK,
+		Msg:  "ok",
+		Data: anyOut,
+	})
 	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
 		return
 	}
-	_, err = resp.Write(result)
-	if err != nil {
-		resp.WriteErrorString(http.StatusInternalServerError, err.Error())
-		return
+	resp.WriteHeader(http.StatusOK)
+
+	var remain int
+	for {
+		outB = outB[remain:]
+		remain, err = resp.Write(outB)
+		if err != nil {
+			return
+		}
+		if remain == 0 {
+			break
+		}
 	}
 }
 

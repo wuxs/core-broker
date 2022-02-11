@@ -5,30 +5,15 @@
 package v1
 
 import (
-	context "context"
 	go_restful "github.com/emicklei/go-restful"
-	errors "github.com/tkeel-io/kit/errors"
-	result "github.com/tkeel-io/kit/result"
-	protojson "google.golang.org/protobuf/encoding/protojson"
-	anypb "google.golang.org/protobuf/types/known/anypb"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	http "net/http"
 )
-
-import transportHTTP "github.com/tkeel-io/kit/transport/http"
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the tkeel package it is being compiled against.
-// import package.context.http.anypb.result.protojson.go_restful.errors.emptypb.
-
-var (
-	_ = protojson.MarshalOptions{}
-	_ = anypb.Any{}
-	_ = emptypb.Empty{}
-)
+// import package.context.http.reflect.go_restful.json.errors.emptypb.
 
 type EntityHTTPServer interface {
-	GetEntity(context.Context, *GetEntityRequest) (*GetEntityResponse, error)
+	GetEntity(req *go_restful.Request, resp *go_restful.Response)
 }
 
 type EntityHTTPHandler struct {
@@ -40,56 +25,7 @@ func newEntityHTTPHandler(s EntityHTTPServer) *EntityHTTPHandler {
 }
 
 func (h *EntityHTTPHandler) GetEntity(req *go_restful.Request, resp *go_restful.Response) {
-	in := GetEntityRequest{}
-	if err := transportHTTP.GetQuery(req, &in); err != nil {
-		resp.WriteHeaderAndJson(http.StatusBadRequest,
-			result.Set(http.StatusBadRequest, err.Error(), nil), "application/json")
-		return
-	}
-
-	ctx := transportHTTP.ContextWithHeader(req.Request.Context(), req.Request.Header)
-
-	out, err := h.srv.GetEntity(ctx, &in)
-	if err != nil {
-		tErr := errors.FromError(err)
-		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
-		resp.WriteHeaderAndJson(httpCode,
-			result.Set(httpCode, tErr.Message, out), "application/json")
-		return
-	}
-	anyOut, err := anypb.New(out)
-	if err != nil {
-		resp.WriteHeaderAndJson(http.StatusInternalServerError,
-			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
-		return
-	}
-
-	outB, err := protojson.MarshalOptions{
-		UseProtoNames:   true,
-		EmitUnpopulated: true,
-	}.Marshal(&result.Http{
-		Code: http.StatusOK,
-		Msg:  "ok",
-		Data: anyOut,
-	})
-	if err != nil {
-		resp.WriteHeaderAndJson(http.StatusInternalServerError,
-			result.Set(http.StatusInternalServerError, err.Error(), nil), "application/json")
-		return
-	}
-	resp.WriteHeader(http.StatusOK)
-
-	var remain int
-	for {
-		outB = outB[remain:]
-		remain, err = resp.Write(outB)
-		if err != nil {
-			return
-		}
-		if remain == 0 {
-			break
-		}
-	}
+	h.srv.GetEntity(req, resp)
 }
 
 func RegisterEntityHTTPServer(container *go_restful.Container, srv EntityHTTPServer) {

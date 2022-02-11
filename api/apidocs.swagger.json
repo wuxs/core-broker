@@ -257,6 +257,59 @@
         ]
       },
       "put": {
+        "summary": "change subscribed to other subscription",
+        "operationId": "changeSubscribe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1ChangeSubscribedResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "当前订阅ID",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "targetID": {
+                  "type": "string",
+                  "format": "uint64",
+                  "description": "目标订阅ID"
+                },
+                "selectedIDs": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "被移动的设备ID"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      },
+      "patch": {
         "summary": "update subscribe",
         "operationId": "updateSubscribe",
         "responses": {
@@ -828,6 +881,15 @@
         }
       },
       "description": "*\nmessage brief plugin information."
+    },
+    "v1ChangeSubscribedResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "请求状态"
+        }
+      }
     },
     "v1ConsoleEntry": {
       "type": "object",

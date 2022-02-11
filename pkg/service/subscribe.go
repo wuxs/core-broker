@@ -17,6 +17,7 @@ const (
 	SuccessStatus               = "SUCCESS"
 	RepeatedInsertionStatus     = "REPEATED INSERTION"
 	InvalidRecordDeletionStatus = "INVALID RECORD DELETION"
+	ErrPartialFailure           = "PARTIAL FAILURE"
 	FailureStatus               = "FAILURE"
 )
 
@@ -385,6 +386,59 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 		})
 	}
 	resp.Data = data
+
+	return resp, nil
+}
+
+func (s SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeSubscribedRequest) (*pb.ChangeSubscribedResponse, error) {
+	tokenInfo, err := s.client.GetTokenMap(ctx)
+	if nil != err {
+		log.Error("err:", err)
+		return nil, err
+	}
+	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: tokenInfo[Owner]}
+	validateSubscribeResult := model.DB().First(&subscribe)
+	if validateSubscribeResult.RowsAffected == 0 {
+		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
+		log.Error("err:", err)
+		return nil, err
+	}
+	targetSubscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.TargetID)}, UserID: tokenInfo[Owner]}
+	validateSubscribeResult = model.DB().First(&targetSubscribe)
+	if validateSubscribeResult.RowsAffected == 0 {
+		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
+		log.Error("err:", err)
+		return nil, err
+	}
+
+	errs := []error{}
+	for i := range req.SelectedIDs {
+		entityID := req.SelectedIDs[i]
+		subscribeEntity := model.SubscribeEntities{
+			SubscribeID: subscribe.ID,
+			EntityID:    entityID,
+			UniqueKey:   fmt.Sprintf("%d:%s", subscribe.ID, entityID),
+		}
+		targetSubscribeEntity := model.SubscribeEntities{
+			SubscribeID: targetSubscribe.ID,
+			EntityID:    entityID,
+			UniqueKey:   fmt.Sprintf("%d:%s", targetSubscribe.ID, entityID),
+		}
+		if err = model.DB().Model(&subscribeEntity).Updates(targetSubscribeEntity).Error; err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if len(errs) == len(req.SelectedIDs) {
+		err = errors.Wrap(errs[0], "change subscribed failed")
+		log.Error("err:", err)
+		return nil, err
+	}
+
+	resp := &pb.ChangeSubscribedResponse{Status: SuccessStatus}
+	if len(errs) < len(req.SelectedIDs) {
+		resp.Status = ErrPartialFailure
+	}
 
 	return resp, nil
 }

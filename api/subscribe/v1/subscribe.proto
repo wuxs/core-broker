@@ -115,7 +115,7 @@ service Subscribe {
   };
   rpc UpdateSubscribe (UpdateSubscribeRequest) returns (UpdateSubscribeResponse) {
     option (google.api.http) = {
-      put : "/subscribe/{id}"
+      patch : "/subscribe/{id}"
       body : "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -170,6 +170,23 @@ service Subscribe {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "get subscribe list";
       operation_id: "listSubscribe";
+      tags: "subscribe";
+      responses: {
+        key: "200"
+        value: {
+          description: "OK";
+        }
+      }
+    };
+  };
+  rpc ChangeSubscribed (ChangeSubscribedRequest) returns (ChangeSubscribedResponse) {
+    option (google.api.http) = {
+      put : "/subscribe/{id}"
+      body : "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "change subscribed to other subscription";
+      operation_id: "changeSubscribe";
       tags: "subscribe";
       responses: {
         key: "200"
@@ -420,6 +437,19 @@ message ListSubscribeResponse {
       description: "Page size",
     }];
   repeated SubscribeObject data = 5;
+}
+
+message ChangeSubscribedRequest {
+  uint64 id = 1
+  [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "当前订阅ID"}];
+  uint64 targetID = 2
+  [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "目标订阅ID"}];
+  repeated string selectedIDs = 3
+  [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "被移动的设备ID"}];
+}
+message ChangeSubscribedResponse {
+  string status = 1
+  [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "请求状态"}];
 }
 
 message Entity {

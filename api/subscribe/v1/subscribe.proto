@@ -360,6 +360,10 @@ message GetSubscribeResponse {
     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅endpoint"}];
   uint64 count = 5
     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅数量"}];
+  int64 created_at = 6
+    [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅创建时间"}];
+  int64 updated_at = 7
+    [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅更新时间"}];
 }
 
 message ListSubscribeRequest {
@@ -429,6 +433,6 @@ message Entity {
     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "template"}];
   string group = 5
     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "group"}];
-  string updated_at = 6
+  int64 updated_at = 6
     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "update time"}];
 }

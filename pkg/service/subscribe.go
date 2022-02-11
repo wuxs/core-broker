@@ -8,6 +8,7 @@ import (
 	pb "github.com/tkeel-io/core-broker/api/subscribe/v1"
 	"github.com/tkeel-io/core-broker/pkg/model"
 	"github.com/tkeel-io/core-broker/pkg/pagination"
+	"github.com/tkeel-io/core-broker/pkg/util"
 	"github.com/tkeel-io/kit/log"
 	"gorm.io/gorm"
 )
@@ -99,6 +100,7 @@ func (s *SubscribeService) SubscribeEntitiesByGroups(ctx context.Context, req *p
 	}
 	return resp, nil
 }
+
 func (s *SubscribeService) SubscribeEntitiesByModels(ctx context.Context, req *pb.SubscribeEntitiesByModelsRequest) (*pb.SubscribeEntitiesByModelsResponse, error) {
 	tokenInfo, err := s.client.GetTokenMap(ctx)
 	if nil != err {
@@ -134,6 +136,7 @@ func (s *SubscribeService) SubscribeEntitiesByModels(ctx context.Context, req *p
 	}
 	return resp, nil
 }
+
 func (s *SubscribeService) UnsubscribeEntitiesByIDs(ctx context.Context, req *pb.UnsubscribeEntitiesByIDsRequest) (*pb.UnsubscribeEntitiesByIDsResponse, error) {
 	// verify Authentication in header and get user token map.
 	tokenInfo, err := s.client.GetTokenMap(ctx)
@@ -173,13 +176,58 @@ func (s *SubscribeService) UnsubscribeEntitiesByIDs(ctx context.Context, req *pb
 
 	return resp, nil
 }
+
 func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.ListSubscribeEntitiesRequest) (*pb.ListSubscribeEntitiesResponse, error) {
-	// TODO: implement
-	fmt.Println("list subscribe id: ", req.Id)
-	fmt.Println(req.PageNum, req.PageSize)
+	tokenInfo, err := s.client.GetTokenMap(ctx)
+	if nil != err {
+		log.Error("err:", err)
+		return nil, err
+	}
+	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: tokenInfo[Owner]}
+	validateSubscribeResult := model.DB().First(&subscribe)
+	if validateSubscribeResult.RowsAffected == 0 {
+		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
+		log.Error("err:", err)
+		return nil, err
+	}
+
+	page, err := pagination.Parse(req)
+	if err != nil {
+		log.Error("err:", err)
+		return nil, err
+	}
+
+	var records []model.SubscribeEntities
+	result := model.Paginate(&records, page, "subscribe_id = ?", subscribe.ID)
+	if result.Error != nil {
+		log.Error("err:", result.Error)
+		return nil, err
+	}
+
 	resp := &pb.ListSubscribeEntitiesResponse{}
+	page.SetTotal(uint(len(cache)))
+	err = page.FillResponse(resp)
+	if err != nil {
+		log.Error("err:", err)
+		return nil, err
+	}
+
+	entitiesIDs := make([]string, len(records))
+	for i := range records {
+		entitiesIDs = append(entitiesIDs, records[i].EntityID)
+	}
+
+	data, err := s.deviceEntities(entitiesIDs)
+	if err != nil {
+		log.Error("err:", err)
+		return nil, err
+	}
+
+	resp.Data = data
+
 	return resp, nil
 }
+
 func (s *SubscribeService) CreateSubscribe(ctx context.Context, req *pb.CreateSubscribeRequest) (*pb.CreateSubscribeResponse, error) {
 	tokenInfo, err := s.client.GetTokenMap(ctx)
 	if nil != err {
@@ -203,6 +251,7 @@ func (s *SubscribeService) CreateSubscribe(ctx context.Context, req *pb.CreateSu
 	resp.Endpoint = sub.Endpoint
 	return resp, nil
 }
+
 func (s *SubscribeService) UpdateSubscribe(ctx context.Context, req *pb.UpdateSubscribeRequest) (*pb.UpdateSubscribeResponse, error) {
 	tokenInfo, err := s.client.GetTokenMap(ctx)
 	if nil != err {
@@ -237,6 +286,7 @@ func (s *SubscribeService) UpdateSubscribe(ctx context.Context, req *pb.UpdateSu
 	}
 	return resp, nil
 }
+
 func (s *SubscribeService) DeleteSubscribe(ctx context.Context, req *pb.DeleteSubscribeRequest) (*pb.DeleteSubscribeResponse, error) {
 	tokenInfo, err := s.client.GetTokenMap(ctx)
 	if nil != err {
@@ -259,6 +309,7 @@ func (s *SubscribeService) DeleteSubscribe(ctx context.Context, req *pb.DeleteSu
 
 	return &pb.DeleteSubscribeResponse{Id: req.Id}, nil
 }
+
 func (s *SubscribeService) GetSubscribe(ctx context.Context, req *pb.GetSubscribeRequest) (*pb.GetSubscribeResponse, error) {
 	tokenInfo, err := s.client.GetTokenMap(ctx)
 	if nil != err {
@@ -282,9 +333,12 @@ func (s *SubscribeService) GetSubscribe(ctx context.Context, req *pb.GetSubscrib
 		Description: subscribe.Description,
 		Endpoint:    subscribe.Endpoint,
 		Count:       uint64(count),
+		CreatedAt:   subscribe.CreatedAt.Unix(),
+		UpdatedAt:   subscribe.UpdatedAt.Unix(),
 	}
 	return resp, nil
 }
+
 func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscribeRequest) (*pb.ListSubscribeResponse, error) {
 	tokenInfo, err := s.client.GetTokenMap(ctx)
 	if nil != err {
@@ -314,8 +368,12 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 		log.Error("err:", err)
 		return nil, err
 	}
+	page.SetTotal(uint(count))
 	resp := &pb.ListSubscribeResponse{}
-	page.FillResponse(resp, count)
+	if err = page.FillResponse(resp); err != nil {
+		log.Error("err:", err)
+		return nil, err
+	}
 
 	data := make([]*pb.SubscribeObject, 0, len(subscribes))
 	for i := range subscribes {
@@ -345,12 +403,42 @@ func (s *SubscribeService) createSubscribeEntitiesRecords(entityIDs []string, su
 	return records
 }
 
+var cache = map[string]*pb.Entity{}
+
 // TODO: implement getDeviceEntitiesIDsFromGroups
 func (s *SubscribeService) getDeviceEntitiesIDsFromGroups(ctx context.Context, groups []string) ([]string, error) {
-	panic("implement me")
+	var data []string
+	for i := range groups {
+		device := pb.Entity{}
+		device.ID = util.GenerateRandString(10)
+		device.Name = util.GenerateRandString(5)
+		device.Group = groups[i]
+		cache[device.ID] = &device
+		data = append(data, device.ID)
+	}
+	return data, nil
 }
 
 // TODO: implement getDeviceEntitiesIDsFromModels
 func (s *SubscribeService) getDeviceEntitiesIDsFromModels(ctx context.Context, models []string) ([]string, error) {
-	panic("implement me")
+	var data []string
+	for i := range models {
+		device := pb.Entity{}
+		device.ID = util.GenerateRandString(10)
+		device.Name = util.GenerateRandString(5)
+		device.Template = models[i]
+		cache[device.ID] = &device
+		data = append(data, device.ID)
+	}
+	return data, nil
+}
+
+// TODO: implement deviceEntities
+func (s SubscribeService) deviceEntities(ids []string) ([]*pb.Entity, error) {
+	entities := make([]*pb.Entity, 0, len(ids))
+	for _, id := range ids {
+		entity := cache[id]
+		entities = append(entities, entity)
+	}
+	return entities, nil
 }

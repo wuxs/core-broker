@@ -926,6 +926,7 @@
         },
         "updated_at": {
           "type": "string",
+          "format": "int64",
           "description": "update time"
         }
       }
@@ -957,6 +958,16 @@
           "type": "string",
           "format": "uint64",
           "description": "订阅数量"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "int64",
+          "description": "订阅创建时间"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "int64",
+          "description": "订阅更新时间"
         }
       }
     },

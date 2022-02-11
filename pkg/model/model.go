@@ -44,11 +44,21 @@ func DB() *gorm.DB {
 }
 
 func Paginate(find interface{}, page pagination.Page, where interface{}, args ...interface{}) *gorm.DB {
-	conditions := page.SearchCondition()
-	if conditions == nil {
-		return DB().Where(where, args...).Limit(int(page.Limit())).Offset(int(page.Offset())).Find(find)
+	conditions, fields := page.SearchCondition()
+
+	if conditions != nil && fields == nil {
+		return DB().Where(where, args...).Where(conditions).Limit(int(page.Limit())).Offset(int(page.Offset())).Find(find)
 	}
-	return DB().Where(where, args...).Where(conditions).Limit(int(page.Limit())).Offset(int(page.Offset())).Find(find)
+
+	if conditions != nil && fields != nil {
+		return DB().Select(fields).Where(where, args...).Where(conditions).Limit(int(page.Limit())).Offset(int(page.Offset())).Find(find)
+	}
+
+	if conditions == nil && fields != nil {
+		return DB().Select(fields).Where(where, args...).Limit(int(page.Limit())).Offset(int(page.Offset())).Find(find)
+	}
+
+	return DB().Where(where, args...).Limit(int(page.Limit())).Offset(int(page.Offset())).Find(find)
 }
 
 func ListAll(find interface{}, where interface{}, args ...interface{}) *gorm.DB {

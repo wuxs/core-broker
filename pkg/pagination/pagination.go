@@ -17,16 +17,18 @@ var (
 	ErrInvalidParseData    = errors.New("invalid data type parsing")
 	ErrNoPageInfo          = errors.New("no page info")
 	ErrInvalidResponse     = errors.New("invalid response")
+	ErrNoTotal             = errors.New("no total data")
 )
 
 type Page struct {
-	Num              int32
-	Size             int32
+	Num              uint
+	Size             uint
 	OrderBy          string
 	IsDescending     bool
 	KeyWords         string
 	SearchKey        string
-	defaultSize      int32
+	Total            uint
+	defaultSize      uint
 	defaultSeparator string
 }
 
@@ -42,31 +44,60 @@ func (p Page) Limit() uint32 {
 		return uint32(p.Size)
 	}
 
-	return uint32(p.defaultSize)
+	if p.Num != 0 {
+		return uint32(p.defaultSize)
+	}
+
+	return 0
 }
 
-func (p Page) SearchCondition() map[string]string {
-	if p.KeyWords == "" {
-		return nil
+func (p Page) SearchCondition() (map[string]string, []string) {
+	var values []string
+	var keys []string
+	if len(p.KeyWords) != 0 {
+		values = strings.Split(p.KeyWords, p.defaultSeparator)
+	}
+	if len(p.SearchKey) != 0 {
+		keys = strings.Split(p.SearchKey, p.defaultSeparator)
 	}
 
-	values := strings.Split(p.KeyWords, p.defaultSeparator)
-	keys := strings.Split(p.SearchKey, p.defaultSeparator)
-
-	cond := make(map[string]string, len(keys))
-
+	valLen := len(values)
+	cond := make(map[string]string, valLen)
+	fields := make([]string, 0, len(keys)-valLen)
 	for i := range keys {
-		cond[keys[i]] = values[i]
+		if i < valLen {
+			value := strings.TrimSpace(values[i])
+			cond[keys[i]] = value
+		} else {
+			value := strings.TrimSpace(keys[i])
+			fields = append(fields, value)
+		}
 	}
 
-	return cond
+	if len(fields) == 0 {
+		fields = nil
+	}
+
+	if len(cond) == 0 {
+		cond = nil
+	}
+
+	return cond, fields
 }
 
 func (p Page) Required() bool {
 	return p.Num > 0 && p.Size > 0
 }
 
-func (p Page) FillResponse(resp interface{}, total int64) error {
+func (p *Page) SetTotal(total uint) {
+	p.Total = total
+}
+
+func (p Page) FillResponse(resp interface{}) error {
+	if p.Total == 0 {
+		return ErrNoTotal
+	}
+
 	t := reflect.TypeOf(resp)
 	v := reflect.ValueOf(resp)
 	for t.Kind() != reflect.Struct {
@@ -83,7 +114,7 @@ func (p Page) FillResponse(resp interface{}, total int64) error {
 		if v.Field(i).CanInterface() {
 			switch t.Field(i).Name {
 			case "Total":
-				v.Field(i).SetUint(uint64(total))
+				v.Field(i).SetUint(uint64(p.Total))
 			case "PageNum":
 				v.Field(i).SetUint(uint64(p.Num))
 			case "LastPage":
@@ -91,14 +122,18 @@ func (p Page) FillResponse(resp interface{}, total int64) error {
 					v.Field(i).SetUint(uint64(0))
 					continue
 				}
-				lastPage := total / int64(p.Size)
-				if total%int64(p.Size) == 0 {
+				lastPage := p.Total / p.Size
+				if p.Total%p.Size == 0 {
 					v.Field(i).SetUint(uint64(lastPage))
 					continue
 				}
 				v.Field(i).SetUint(uint64(lastPage + 1))
 
 			case "PageSize":
+				if p.Size == 0 {
+					v.Field(i).SetUint(uint64(p.Total))
+					continue
+				}
 				v.Field(i).SetUint(uint64(p.Size))
 			}
 		}
@@ -136,17 +171,33 @@ func Parse(req interface{}, options ...Option) (Page, error) {
 		if v.Field(i).CanInterface() {
 			switch t.Field(i).Name {
 			case "PageNum":
-				if val, ok := v.Field(i).Interface().(int32); ok {
+				if val, ok := v.Field(i).Interface().(uint); ok {
 					q.Num = val
-				} else {
-					return q, ErrInvalidPageNum
+					continue
 				}
+				if val, ok := v.Field(i).Interface().(uint32); ok {
+					q.Num = uint(val)
+					continue
+				}
+				if val, ok := v.Field(i).Interface().(uint64); ok {
+					q.Num = uint(val)
+					continue
+				}
+				return q, ErrInvalidPageNum
 			case "PageSize":
-				if val, ok := v.Field(i).Interface().(int32); ok {
+				if val, ok := v.Field(i).Interface().(uint); ok {
 					q.Size = val
-				} else {
-					return q, ErrInvalidPageSize
+					continue
 				}
+				if val, ok := v.Field(i).Interface().(uint32); ok {
+					q.Size = uint(val)
+					continue
+				}
+				if val, ok := v.Field(i).Interface().(uint64); ok {
+					q.Size = uint(val)
+					continue
+				}
+				return q, ErrInvalidPageSize
 			case "OrderBy":
 				if val, ok := v.Field(i).Interface().(string); ok {
 					q.OrderBy = val
@@ -175,10 +226,6 @@ func Parse(req interface{}, options ...Option) (Page, error) {
 		}
 	}
 
-	if reflect.DeepEqual(q, Page{}) {
-		return q, ErrNoPageInfo
-	}
-
 	for i := range options {
 		if err := options[i](&q); err != nil {
 			return q, err
@@ -188,14 +235,14 @@ func Parse(req interface{}, options ...Option) (Page, error) {
 	return q, nil
 }
 
-func SetDefaultSize(size int32) Option {
+func WithDefaultSize(size uint) Option {
 	return func(p *Page) error {
 		p.defaultSize = size
 		return nil
 	}
 }
 
-func SetDefaultSeparator(separator string) Option {
+func WithDefaultSeparator(separator string) Option {
 	return func(p *Page) error {
 		p.defaultSeparator = separator
 		return nil

@@ -6,21 +6,39 @@ import "github.com/tkeel.io/kit/pagination"
 
 func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.ListSubscribeEntitiesRequest) (*pb.ListSubscribeEntitiesResponse, error) {
     page, err := pagination.Parse(req)
-
-    // {Num:10 Size:50 OrderBy:test IsDescending:true KeyWords:key SearchKey:search}
+    
+	// {Num:10 Size:50 OrderBy:test IsDescending:true KeyWords:key SearchKey:search}
     fmt.Println(page)
+
+    // for example query like an ORM operator 
+	query := DB.Query()
 	
 	if page.Requried {
+		cond, fields := page.SearchCondition()
+    if cond != nil {
+		query.Where(cond)
+	}
+	if fields != nil {
+        query.Select(fields...)
+    }
+	}
 		// Do paginate here
-        query := "LIMIT " + strconv.Itoa(int(page.Limit()))
-        query += "OFFSET " + strconv.Itoa(int(page.Offset()))
+        query.Limit(page.Limit())
+        query.Offset(page.Offset())
 
 	} else {
 		// Query all date here
     }
+	// Query data here
+	data := query.Find()
 	
-	count := db.Find(query).Count()
+	// count all after remove Offset and Limit
+	count := query.Offset(-1).Limit(-1).Count()
 	
+	resp := &pb.ListSubscribeEntitiesResponse{}
+    resp.Data = data
+	
+	// Fill Response Page Fields
     page.FillResponse(resp, count)
 }
 
@@ -60,25 +78,56 @@ func (p Page) Offset() uint32 {
 ```
 
 ## func SearchCondition
-return a `map[string]string` for the search condition 
+return a `map[string]string` for the search condition and a `[]string` for the search fields.
+
+iIf the search have no condition or fields required, return `nil`
 ```go
-func (p Page) SearchCondition() map[string]string {
-	if p.KeyWords == "" {
-		return nil
-	}
+func (p Page) SearchCondition() (map[string]string, []string) {
+    var values []string
+    var keys []string
+    if len(p.KeyWords) != 0 {
+        values = strings.Split(p.KeyWords, p.defaultSeparator)
+    }
+    if len(p.SearchKey) != 0 {
+        keys = strings.Split(p.SearchKey, p.defaultSeparator)
+    }
 
-	values := strings.Split(p.KeyWords, p.defaultSeparator)
-	keys := strings.Split(p.SearchKey, p.defaultSeparator)
+    valLen := len(values)
+    cond := make(map[string]string, valLen)
+    fields := make([]string, 0, len(keys)-valLen)
+    for i := range keys {
+        if i < valLen {
+            value := strings.TrimSpace(values[i])
+            cond[keys[i]] = value
+        } else {
+            value := strings.TrimSpace(keys[i])
+            fields = append(fields, value)
+        }
+    }
 
-	cond := make(map[string]string, len(keys))
+    if len(fields) == 0 {
+        fields = nil
+    }
 
-	for i := range keys {
-		cond[keys[i]] = values[i]
-	}
+    if len(cond) == 0 {
+        cond = nil
+    }
 
-	return cond
+    return cond, fields
 }
 ```
+### Usage
+```go
+
+    cond, fields := page.SearchCondition()
+    if cond != nil {
+        query = query.Where(cond)
+    }
+    if fields != nil {
+        query = query.Select(fields...)
+    }
+```
+
 
 ## func FillResponse
 Automatic padding of paginated data to match paginated responsive design.

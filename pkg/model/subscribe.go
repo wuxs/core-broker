@@ -36,7 +36,7 @@ func destroyRelevant() {
 }
 
 type SubscribeEntities struct {
-	SubscribeID uint   `gorm:"index"`
-	EntityID    string `gorm:"index"`
+	SubscribeID uint   `gorm:"index,not null"`
+	EntityID    string `gorm:"index,not null"`
 	UniqueKey   string `gorm:"index, unique,size:255"`
 }

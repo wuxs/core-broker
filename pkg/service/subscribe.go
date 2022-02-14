@@ -199,7 +199,7 @@ func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.Li
 	}
 
 	var records []model.SubscribeEntities
-	result := model.Paginate(&records, page, "subscribe_id = ?", subscribe.ID)
+	result := model.Paginate(&records, page, model.SubscribeEntities{SubscribeID: subscribe.ID})
 	if result.Error != nil {
 		log.Error("err:", result.Error)
 		return nil, err
@@ -213,7 +213,7 @@ func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.Li
 		return nil, err
 	}
 
-	entitiesIDs := make([]string, len(records))
+	entitiesIDs := make([]string, 0, len(records))
 	for i := range records {
 		entitiesIDs = append(entitiesIDs, records[i].EntityID)
 	}

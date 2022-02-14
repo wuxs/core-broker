@@ -66,5 +66,5 @@ func ListAll(find interface{}, where interface{}, args ...interface{}) *gorm.DB 
 }
 
 func Count(count *int64, where interface{}, args ...interface{}) *gorm.DB {
-	return DB().Where(where, args).Count(count)
+	return DB().Model(&SubscribeEntities{}).Where(where, args).Count(count)
 }

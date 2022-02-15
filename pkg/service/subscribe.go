@@ -156,24 +156,26 @@ func (s *SubscribeService) UnsubscribeEntitiesByIDs(ctx context.Context, req *pb
 		Id:     req.Id,
 		Status: SuccessStatus,
 	}
-	records := make([]model.SubscribeEntities, 0, len(req.Entities))
+
+	tx := model.DB().Begin()
 	for _, entityID := range req.Entities {
 		subscribeEntity := model.SubscribeEntities{
 			SubscribeID: subscribe.ID,
 			EntityID:    entityID,
 			UniqueKey:   fmt.Sprintf("%d:%s", subscribe.ID, entityID),
 		}
-		records = append(records, subscribeEntity)
+		result := tx.
+			Where("subscribe_id = ?", subscribeEntity.SubscribeID).
+			Where("entity_id = ?", subscribeEntity.EntityID).
+			Where("unique_key = ?", subscribeEntity.UniqueKey).
+			Delete(&subscribeEntity)
+		if result.Error != nil {
+			log.Error("err:", result.Error)
+			tx.Rollback()
+			return nil, result.Error
+		}
 	}
-
-	result := model.DB().Delete(&records)
-	if result.Error != nil {
-		log.Error("err:", result.Error)
-		return nil, result.Error
-	}
-	if result.RowsAffected != int64(len(records)) {
-		resp.Status = InvalidRecordDeletionStatus
-	}
+	tx.Commit()
 
 	return resp, nil
 }

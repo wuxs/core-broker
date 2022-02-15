@@ -28,6 +28,7 @@ type SubscribeClient interface {
 	DeleteSubscribe(ctx context.Context, in *DeleteSubscribeRequest, opts ...grpc.CallOption) (*DeleteSubscribeResponse, error)
 	GetSubscribe(ctx context.Context, in *GetSubscribeRequest, opts ...grpc.CallOption) (*GetSubscribeResponse, error)
 	ListSubscribe(ctx context.Context, in *ListSubscribeRequest, opts ...grpc.CallOption) (*ListSubscribeResponse, error)
+	ChangeSubscribed(ctx context.Context, in *ChangeSubscribedRequest, opts ...grpc.CallOption) (*ChangeSubscribedResponse, error)
 }
 
 type subscribeClient struct {
@@ -128,6 +129,15 @@ func (c *subscribeClient) ListSubscribe(ctx context.Context, in *ListSubscribeRe
 	return out, nil
 }
 
+func (c *subscribeClient) ChangeSubscribed(ctx context.Context, in *ChangeSubscribedRequest, opts ...grpc.CallOption) (*ChangeSubscribedResponse, error) {
+	out := new(ChangeSubscribedResponse)
+	err := c.cc.Invoke(ctx, "/api.subscribe.v1.Subscribe/ChangeSubscribed", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SubscribeServer is the server API for Subscribe service.
 // All implementations must embed UnimplementedSubscribeServer
 // for forward compatibility
@@ -142,6 +152,7 @@ type SubscribeServer interface {
 	DeleteSubscribe(context.Context, *DeleteSubscribeRequest) (*DeleteSubscribeResponse, error)
 	GetSubscribe(context.Context, *GetSubscribeRequest) (*GetSubscribeResponse, error)
 	ListSubscribe(context.Context, *ListSubscribeRequest) (*ListSubscribeResponse, error)
+	ChangeSubscribed(context.Context, *ChangeSubscribedRequest) (*ChangeSubscribedResponse, error)
 	mustEmbedUnimplementedSubscribeServer()
 }
 
@@ -178,6 +189,9 @@ func (UnimplementedSubscribeServer) GetSubscribe(context.Context, *GetSubscribeR
 }
 func (UnimplementedSubscribeServer) ListSubscribe(context.Context, *ListSubscribeRequest) (*ListSubscribeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListSubscribe not implemented")
+}
+func (UnimplementedSubscribeServer) ChangeSubscribed(context.Context, *ChangeSubscribedRequest) (*ChangeSubscribedResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChangeSubscribed not implemented")
 }
 func (UnimplementedSubscribeServer) mustEmbedUnimplementedSubscribeServer() {}
 
@@ -372,6 +386,24 @@ func _Subscribe_ListSubscribe_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Subscribe_ChangeSubscribed_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangeSubscribedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubscribeServer).ChangeSubscribed(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.subscribe.v1.Subscribe/ChangeSubscribed",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubscribeServer).ChangeSubscribed(ctx, req.(*ChangeSubscribedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Subscribe_ServiceDesc is the grpc.ServiceDesc for Subscribe service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -418,6 +450,10 @@ var Subscribe_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListSubscribe",
 			Handler:    _Subscribe_ListSubscribe_Handler,
+		},
+		{
+			MethodName: "ChangeSubscribed",
+			Handler:    _Subscribe_ChangeSubscribed_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

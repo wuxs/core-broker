@@ -40,14 +40,14 @@ func NewOpenapiService() *OpenapiService {
 // AddonsIdentify implements AddonsIdentify.OpenapiServer.
 func (s *OpenapiService) AddonsIdentify(ctx context.Context, in *openapi_v1.AddonsIdentifyRequest) (*openapi_v1.AddonsIdentifyResponse, error) {
 	return &openapi_v1.AddonsIdentifyResponse{
-		Res: util.GetV1ResultBadRequest("not declare addons"),
+		Res: util.BadRequestResult("not declare addons"),
 	}, nil
 }
 
 // Identify implements Identify.OpenapiServer.
 func (s *OpenapiService) Identify(ctx context.Context, in *emptypb.Empty) (*openapi_v1.IdentifyResponse, error) {
 	return &openapi_v1.IdentifyResponse{
-		Res:          util.GetV1ResultOK(),
+		Res:          util.OKResult(),
 		PluginId:     "core-broker",
 		Version:      "v0.3.0",
 		TkeelVersion: "v0.3.0",
@@ -57,7 +57,7 @@ func (s *OpenapiService) Identify(ctx context.Context, in *emptypb.Empty) (*open
 // Status implements Status.OpenapiServer.
 func (s *OpenapiService) Status(ctx context.Context, in *emptypb.Empty) (*openapi_v1.StatusResponse, error) {
 	return &openapi_v1.StatusResponse{
-		Res:    util.GetV1ResultOK(),
+		Res:    util.OKResult(),
 		Status: openapi_v1.PluginStatus_RUNNING,
 	}, nil
 }
@@ -65,13 +65,13 @@ func (s *OpenapiService) Status(ctx context.Context, in *emptypb.Empty) (*openap
 // TenantEnable implements TenantEnable.OpenapiServer.
 func (s *OpenapiService) TenantEnable(ctx context.Context, in *openapi_v1.TenantEnableRequest) (*openapi_v1.TenantEnableResponse, error) {
 	return &openapi_v1.TenantEnableResponse{
-		Res: util.GetV1ResultOK(),
+		Res: util.OKResult(),
 	}, nil
 }
 
 // TenantDisable implements TenantDisable.OpenapiServer.
 func (s *OpenapiService) TenantDisable(ctx context.Context, in *openapi_v1.TenantDisableRequest) (*openapi_v1.TenantDisableResponse, error) {
 	return &openapi_v1.TenantDisableResponse{
-		Res: util.GetV1ResultOK(),
+		Res: util.OKResult(),
 	}, nil
 }

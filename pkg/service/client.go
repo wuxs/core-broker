@@ -29,7 +29,13 @@ const (
 	tkeelAuthHeader = `x-tKeel-auth`
 	defaultTenant   = `_tKeel_system`
 	defaultUser     = `_tKeel_admin`
-	defultRole      = `admin`
+	defaultRole     = `admin`
+)
+
+const (
+	Owner     = "owner"
+	Source    = "source"
+	UserToken = "user_token"
 )
 
 type CoreClient struct {
@@ -45,17 +51,17 @@ func NewCoreClient() *CoreClient {
 	return &CoreClient{}
 }
 
-// get core url
+// GetCoreUrl get core url
 func (c *CoreClient) GetCoreUrl(midUrl string, mapUrl map[string]string, entityType string) string {
 	url := fmt.Sprintf(coreUrl+midUrl+"?"+"type=%s&owner=%s&source=%s", entityType, mapUrl["owner"], mapUrl["source"])
 	return url
 }
 
-//get token
+// GetTokenMap get token
 func (c *CoreClient) GetTokenMap(ctx context.Context) (map[string]string, error) {
 	header := transportHTTP.HeaderFromContext(ctx)
 	token, ok := header[tokenKey]
-	if !ok {
+	if !ok || len(token) == 0 {
 		return nil, errors.New("invalid Authorization")
 	}
 	// only use the first one
@@ -93,10 +99,9 @@ func (c *CoreClient) parseToken(token string) (map[string]string, error) {
 
 	// save token, map[entity_id:406c79543e0245a994a742e69ce48e71 entity_type:device tenant_id: token_id:de25624a-1d0a-4ab0-b1f1-5b0db5a12c30 user_id:abc]
 	urlMap := map[string]string{
-		"owner": tokenMap["user_id"].(string),
-		//"type":      "device",
-		"source":    "device",
-		"userToken": token,
+		Owner:     tokenMap["user_id"].(string),
+		Source:    "device",
+		UserToken: token,
 	}
 	return urlMap, nil
 }
@@ -232,7 +237,7 @@ func (c *CoreClient) CreatEntityToken(entityType, id, owner string, token string
 }
 
 func AddDefaultAuthHeader(req *http.Request) {
-	authString := fmt.Sprintf("tenant=%s&user=%s&role=%s", defaultTenant, defaultUser, defultRole)
+	authString := fmt.Sprintf("tenant=%s&user=%s&role=%s", defaultTenant, defaultUser, defaultRole)
 	req.Header.Add(tkeelAuthHeader, base64.StdEncoding.EncodeToString([]byte(authString)))
 }
 

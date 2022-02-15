@@ -16,25 +16,55 @@ limitations under the License.
 
 package util
 
-import v1 "github.com/tkeel-io/tkeel-interface/openapi/v1"
+import (
+	"crypto/rand"
+	mathRand "math/rand"
+	"time"
 
-func GetV1ResultOK() *v1.Result {
+	v1 "github.com/tkeel-io/tkeel-interface/openapi/v1"
+)
+
+func OKResult() *v1.Result {
 	return &v1.Result{
 		Ret: v1.Retcode_OK,
 		Msg: "ok",
 	}
 }
 
-func GetV1ResultBadRequest(msg string) *v1.Result {
+func BadRequestResult(msg string) *v1.Result {
 	return &v1.Result{
 		Ret: v1.Retcode_BAD_REQEUST,
 		Msg: msg,
 	}
 }
 
-func GetV1ResultInternalError(msg string) *v1.Result {
+func InternalErrorResult(msg string) *v1.Result {
 	return &v1.Result{
 		Ret: v1.Retcode_INTERNAL_ERROR,
 		Msg: msg,
 	}
+}
+
+var chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+
+func GenerateSubscribeEndpoint() string {
+	buf := make([]byte, 16)
+	if _, err := rand.Read(buf); err != nil {
+		return GenerateRandString(16)
+	}
+	for b := range buf {
+		buf[b] = chars[buf[b]%uint8(len(chars))]
+	}
+	return string(buf)
+}
+
+func GenerateRandString(len int) string {
+	b := make([]byte, len, len)
+	for i := 0; i < len; i++ {
+		mathRand.NewSource(time.Now().UnixNano())
+		index := mathRand.Intn(len)
+		b[i] = chars[index]
+	}
+
+	return string(b)
 }

@@ -28,10 +28,12 @@ func (s Subscribe) AfterDelete(tx *gorm.DB) error {
 }
 
 func destroyEndpoint(endpoint string) {
+	// TODO: destroy endpoint
 	log.Debug("endpoint: %s", endpoint)
 }
 
 func destroyRelevant() {
+	// TODO: destroy relevant
 	log.Debug("destroyRelevant")
 }
 

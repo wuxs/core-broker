@@ -19,7 +19,7 @@ func NewDaprSubscribeService() *DaprSubscribeService {
 func (s *DaprSubscribeService) GetSubscribe(ctx context.Context, req *emptypb.Empty) (*pb.ListTopicSubscriptionsResponse, error) {
 	resp := &pb.ListTopicSubscriptionsResponse{}
 	resp.Subscriptions = append(resp.Subscriptions, &pb.TopicSubscription{
-		PubsubName: types.PubsubName,
+		Pubsubname: types.PubsubName,
 		Topic:      types.Topic,
 		Metadata:   map[string]string{},
 		Route:      "/v1/topic",

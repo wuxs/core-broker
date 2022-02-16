@@ -1,12 +1,24 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "api/dapr/subscribe.proto",
+    "title": "api/topic/v1/topic.proto",
     "version": "version not set"
   },
   "tags": [
     {
+      "name": "Topic"
+    },
+    {
+      "name": "Openapi"
+    },
+    {
       "name": "Subscribe"
+    },
+    {
+      "name": "Subscribe"
+    },
+    {
+      "name": "Entity"
     }
   ],
   "consumes": [
@@ -16,6 +28,85 @@
     "application/json"
   ],
   "paths": {
+    "/addons/identify": {
+      "post": {
+        "summary": "openapi addons identify",
+        "operationId": "Identify",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1AddonsIdentifyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddonsIdentifyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Openapi"
+        ]
+      }
+    },
+    "/identify": {
+      "get": {
+        "summary": "openapi identify",
+        "operationId": "Identify",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1IdentifyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "Openapi"
+        ]
+      }
+    },
+    "/status": {
+      "get": {
+        "summary": "openapi status",
+        "operationId": "Status",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1StatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "Openapi"
+        ]
+      }
+    },
     "/subscribe": {
       "get": {
         "operationId": "Subscribe_GetSubscribe",
@@ -35,6 +126,636 @@
         },
         "tags": [
           "Subscribe"
+        ]
+      },
+      "post": {
+        "summary": "create subscribe",
+        "operationId": "createSubscribe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1CreateSubscribeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateSubscribeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      }
+    },
+    "/subscribe/list": {
+      "post": {
+        "summary": "get subscribe list",
+        "operationId": "listSubscribe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1ListSubscribeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ListSubscribeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      }
+    },
+    "/subscribe/{id}": {
+      "get": {
+        "summary": "get subscribe",
+        "operationId": "getSubscribe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1GetSubscribeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "订阅ID",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      },
+      "delete": {
+        "summary": "delete subscribe",
+        "operationId": "deleteSubscribe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteSubscribeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "订阅ID",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      },
+      "put": {
+        "summary": "change subscribed to other subscription",
+        "operationId": "changeSubscribe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1ChangeSubscribedResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "当前订阅ID",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "targetID": {
+                  "type": "string",
+                  "format": "uint64",
+                  "description": "目标订阅ID"
+                },
+                "selectedIDs": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "被移动的设备ID"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      },
+      "patch": {
+        "summary": "update subscribe",
+        "operationId": "updateSubscribe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateSubscribeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "订阅ID",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "订阅名称"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "订阅描述"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      }
+    },
+    "/subscribe/{id}/entities": {
+      "post": {
+        "summary": "add subscribe entities by ids",
+        "operationId": "subscribeEntitiesByIDs",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1SubscribeEntitiesByIDsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "订阅ID",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "entities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "实体id列表"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      }
+    },
+    "/subscribe/{id}/entities/delete": {
+      "post": {
+        "summary": "delete subscribe entities by ids",
+        "operationId": "unsubscribeEntitiesByIDs",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1UnsubscribeEntitiesByIDsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "订阅ID",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "entities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "订阅ID"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      }
+    },
+    "/subscribe/{id}/entities/list": {
+      "post": {
+        "summary": "get subscribe entities list",
+        "operationId": "listSubscribeEntities",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1ListSubscribeEntitiesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "订阅ID",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "page_num": {
+                  "type": "string",
+                  "format": "uint64",
+                  "description": "Page number",
+                  "required": [
+                    "page_num"
+                  ]
+                },
+                "page_size": {
+                  "type": "string",
+                  "format": "uint64",
+                  "description": "Page size",
+                  "required": [
+                    "page_size"
+                  ]
+                },
+                "order_by": {
+                  "type": "string",
+                  "description": "Order by"
+                },
+                "is_descending": {
+                  "type": "boolean",
+                  "description": "Is descending"
+                },
+                "key_words": {
+                  "type": "string",
+                  "description": "Key words"
+                },
+                "search_key": {
+                  "type": "string",
+                  "description": "Search Key"
+                }
+              },
+              "required": [
+                "page_num",
+                "page_size"
+              ]
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      }
+    },
+    "/subscribe/{id}/groups": {
+      "post": {
+        "summary": "add subscribe entities by groups",
+        "operationId": "subscribeEntitiesByGroups",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1SubscribeEntitiesByGroupsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "订阅ID",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "groups": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "实体组列表"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      }
+    },
+    "/subscribe/{id}/models": {
+      "post": {
+        "summary": "add subscribe entities by models",
+        "operationId": "subscribeEntitiesByModels",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1SubscribeEntitiesByModelsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "订阅ID",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "models": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "模型列表"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      }
+    },
+    "/tenant/disable": {
+      "post": {
+        "summary": "openapi tenant disable",
+        "operationId": "TenantDisable",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1TenantDisableResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1TenantDisableRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Openapi"
+        ]
+      }
+    },
+    "/tenant/enable": {
+      "post": {
+        "summary": "openapi tenant enable",
+        "operationId": "TenantEnable",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1TenantEnableResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1TenantEnableRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Openapi"
+        ]
+      }
+    },
+    "/topic": {
+      "post": {
+        "summary": "TopicEvent handler",
+        "operationId": "topicEventHandler",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1TopicEventResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1TopicEventRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TopicEvent"
+        ]
+      }
+    },
+    "/ws": {
+      "get": {
+        "operationId": "Entity_GetEntity",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetEntityResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "Entity"
         ]
       }
     }
@@ -87,6 +808,14 @@
       },
       "additionalProperties": {}
     },
+    "protobufNullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\n The JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+    },
     "rpcStatus": {
       "type": "object",
       "properties": {
@@ -102,6 +831,640 @@
           "items": {
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "v1AddonsIdentifyRequest": {
+      "type": "object",
+      "properties": {
+        "plugin": {
+          "$ref": "#/definitions/v1BriefPluginInfo"
+        },
+        "implemented_addons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ImplementedAddons"
+          }
+        }
+      },
+      "description": "*\nThe request value of the POST /v1/addons/identify,\nused when the plugin in the registration process implements\nthe extension point of the registered plugin."
+    },
+    "v1AddonsIdentifyResponse": {
+      "type": "object",
+      "properties": {
+        "res": {
+          "$ref": "#/definitions/v1Result"
+        }
+      },
+      "description": "*\nThe response value of the POST /v1/addons/identify,\nused when the plugin in the registration process implements\nthe extension point of the registered plugin."
+    },
+    "v1AddonsPoint": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "desc": {
+          "type": "string"
+        }
+      },
+      "description": "*\nmessage plugin declares extension point."
+    },
+    "v1BriefPluginInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "description": "*\nmessage brief plugin information."
+    },
+    "v1ChangeSubscribedResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "请求状态"
+        }
+      }
+    },
+    "v1ConsoleEntry": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "entry": {
+          "type": "string"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ConsoleEntry"
+          }
+        }
+      },
+      "description": "plugin console entry."
+    },
+    "v1CreateSubscribeRequest": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "订阅名称"
+        },
+        "description": {
+          "type": "string",
+          "description": "订阅描述"
+        }
+      }
+    },
+    "v1CreateSubscribeResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64",
+          "description": "订阅ID"
+        },
+        "title": {
+          "type": "string",
+          "description": "订阅名称"
+        },
+        "description": {
+          "type": "string",
+          "description": "订阅描述"
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "订阅endpoint"
+        }
+      }
+    },
+    "v1DeleteSubscribeResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64",
+          "description": "订阅ID"
+        }
+      }
+    },
+    "v1Entity": {
+      "type": "object",
+      "properties": {
+        "ID": {
+          "type": "string",
+          "description": "entity id"
+        },
+        "name": {
+          "type": "string",
+          "description": "name"
+        },
+        "status": {
+          "type": "string",
+          "description": "status"
+        },
+        "template": {
+          "type": "string",
+          "description": "template"
+        },
+        "group": {
+          "type": "string",
+          "description": "group"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "int64",
+          "description": "update time"
+        }
+      }
+    },
+    "v1GetEntityResponse": {
+      "type": "object"
+    },
+    "v1GetSubscribeResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64",
+          "description": "订阅ID"
+        },
+        "title": {
+          "type": "string",
+          "description": "订阅名称"
+        },
+        "description": {
+          "type": "string",
+          "description": "订阅描述"
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "订阅endpoint"
+        },
+        "count": {
+          "type": "string",
+          "format": "uint64",
+          "description": "订阅数量"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "int64",
+          "description": "订阅创建时间"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "int64",
+          "description": "订阅更新时间"
+        }
+      }
+    },
+    "v1IdentifyResponse": {
+      "type": "object",
+      "properties": {
+        "res": {
+          "$ref": "#/definitions/v1Result"
+        },
+        "plugin_id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "tkeel_version": {
+          "type": "string"
+        },
+        "addons_point": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1AddonsPoint"
+          }
+        },
+        "implemented_plugin": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ImplementedPlugin"
+          }
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ConsoleEntry"
+          }
+        }
+      },
+      "description": "*\nThe response value of the GET /v1/identify,\nused when the plugin registered."
+    },
+    "v1ImplementedAddons": {
+      "type": "object",
+      "properties": {
+        "addons_point": {
+          "type": "string"
+        },
+        "implemented_endpoint": {
+          "type": "string"
+        }
+      },
+      "description": "*\nmessage plugin declares implemented other plugin extension point."
+    },
+    "v1ImplementedPlugin": {
+      "type": "object",
+      "properties": {
+        "plugin": {
+          "$ref": "#/definitions/v1BriefPluginInfo"
+        },
+        "addons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ImplementedAddons"
+          }
+        }
+      },
+      "description": "*\nmessage plugin implemented other plugin."
+    },
+    "v1ListSubscribeEntitiesResponse": {
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "string",
+          "format": "uint64",
+          "description": "Total",
+          "required": [
+            "total"
+          ]
+        },
+        "page_num": {
+          "type": "string",
+          "format": "uint64",
+          "description": "Page number",
+          "required": [
+            "page_num"
+          ]
+        },
+        "last_page": {
+          "type": "string",
+          "format": "uint64",
+          "description": "Last page",
+          "required": [
+            "last_page"
+          ]
+        },
+        "page_size": {
+          "type": "string",
+          "format": "uint64",
+          "description": "Page size",
+          "required": [
+            "page_size"
+          ]
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Entity"
+          },
+          "description": "订阅实体"
+        }
+      },
+      "required": [
+        "total",
+        "page_num",
+        "last_page",
+        "page_size"
+      ]
+    },
+    "v1ListSubscribeRequest": {
+      "type": "object",
+      "properties": {
+        "page_num": {
+          "type": "string",
+          "format": "uint64",
+          "description": "Page number",
+          "required": [
+            "page_num"
+          ]
+        },
+        "page_size": {
+          "type": "string",
+          "format": "uint64",
+          "description": "Page size",
+          "required": [
+            "page_size"
+          ]
+        },
+        "order_by": {
+          "type": "string",
+          "description": "Order by"
+        },
+        "is_descending": {
+          "type": "boolean",
+          "description": "Is descending"
+        },
+        "key_words": {
+          "type": "string",
+          "description": "Key words"
+        },
+        "search_key": {
+          "type": "string",
+          "description": "Search Key"
+        }
+      },
+      "required": [
+        "page_num",
+        "page_size"
+      ]
+    },
+    "v1ListSubscribeResponse": {
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "string",
+          "format": "uint64",
+          "description": "Total",
+          "required": [
+            "total"
+          ]
+        },
+        "page_num": {
+          "type": "string",
+          "format": "uint64",
+          "description": "Page number",
+          "required": [
+            "page_num"
+          ]
+        },
+        "last_page": {
+          "type": "string",
+          "format": "uint64",
+          "description": "Last page",
+          "required": [
+            "last_page"
+          ]
+        },
+        "page_size": {
+          "type": "string",
+          "format": "uint64",
+          "description": "Page size",
+          "required": [
+            "page_size"
+          ]
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1SubscribeObject"
+          }
+        }
+      },
+      "required": [
+        "total",
+        "page_num",
+        "last_page",
+        "page_size"
+      ]
+    },
+    "v1PluginStatus": {
+      "type": "string",
+      "enum": [
+        "UNKNOWN",
+        "WAIT_RUNNING",
+        "ERR_REGISTER",
+        "RUNNING"
+      ],
+      "default": "UNKNOWN",
+      "description": "*\nplugin state enum."
+    },
+    "v1Result": {
+      "type": "object",
+      "properties": {
+        "ret": {
+          "$ref": "#/definitions/v1Retcode"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "description": "*\nmessage result."
+    },
+    "v1Retcode": {
+      "type": "string",
+      "enum": [
+        "OK",
+        "BAD_REQEUST",
+        "INTERNAL_ERROR"
+      ],
+      "default": "OK",
+      "description": "*\nerror code enum."
+    },
+    "v1StatusResponse": {
+      "type": "object",
+      "properties": {
+        "res": {
+          "$ref": "#/definitions/v1Result"
+        },
+        "status": {
+          "$ref": "#/definitions/v1PluginStatus"
+        }
+      },
+      "description": "*\nThe request value of the GET /v1/Status.\nused when the tkeel checks the status of plugins regularly."
+    },
+    "v1SubscribeEntitiesByGroupsResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64",
+          "description": "订阅ID"
+        },
+        "status": {
+          "type": "string",
+          "description": "订阅状态"
+        }
+      }
+    },
+    "v1SubscribeEntitiesByIDsResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64",
+          "description": "订阅ID"
+        },
+        "status": {
+          "type": "string",
+          "description": "订阅状态"
+        }
+      }
+    },
+    "v1SubscribeEntitiesByModelsResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64",
+          "description": "订阅ID"
+        },
+        "status": {
+          "type": "string",
+          "description": "订阅状态"
+        }
+      }
+    },
+    "v1SubscribeObject": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64",
+          "description": "订阅ID"
+        },
+        "title": {
+          "type": "string",
+          "description": "订阅名称"
+        },
+        "description": {
+          "type": "string",
+          "description": "订阅描述"
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "订阅endpoint"
+        }
+      }
+    },
+    "v1TenantDisableRequest": {
+      "type": "object",
+      "properties": {
+        "tenant_id": {
+          "type": "string"
+        },
+        "extra": {
+          "type": "string",
+          "format": "byte"
+        }
+      },
+      "description": "*\nThe request value of the POST /v1/tenant/disable,\nused when the tenant administrator disables the plugin."
+    },
+    "v1TenantDisableResponse": {
+      "type": "object",
+      "properties": {
+        "res": {
+          "$ref": "#/definitions/v1Result"
+        }
+      },
+      "description": "*\nThe response value of the POST /v1/tenant/disable,\nused when the tenant administrator disables the plugin."
+    },
+    "v1TenantEnableRequest": {
+      "type": "object",
+      "properties": {
+        "tenant_id": {
+          "type": "string"
+        },
+        "extra": {
+          "type": "string",
+          "format": "byte"
+        }
+      },
+      "description": "*\nThe request value of the POST /v1/tenant/enable,\nused when the tenant administrator enables the plugin."
+    },
+    "v1TenantEnableResponse": {
+      "type": "object",
+      "properties": {
+        "res": {
+          "$ref": "#/definitions/v1Result"
+        }
+      },
+      "description": "*\nThe response value of the POST /v1/tenant/enable,\nused when the tenant administrator enables the plugin."
+    },
+    "v1TopicEventRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "specversion": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "datacontenttype": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object"
+        },
+        "data_base64": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "topic": {
+          "type": "string"
+        },
+        "pubsubname": {
+          "type": "string"
+        }
+      }
+    },
+    "v1TopicEventResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "v1UnsubscribeEntitiesByIDsResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64",
+          "description": "订阅ID"
+        },
+        "status": {
+          "type": "string",
+          "description": "订阅状态"
+        }
+      }
+    },
+    "v1UpdateSubscribeResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64",
+          "description": "订阅ID"
+        },
+        "title": {
+          "type": "string",
+          "description": "订阅名称"
+        },
+        "description": {
+          "type": "string",
+          "description": "订阅描述"
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "订阅endpoint"
         }
       }
     }

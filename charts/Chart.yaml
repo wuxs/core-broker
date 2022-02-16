@@ -22,3 +22,21 @@ version: 0.3.0
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "0.3.0"
+
+# Chart annotations.
+annotations:
+  # Valid values are "y","yes","true","on","1"
+  # not case sensitive.
+  tkeel.io/enable: "true"
+  tkeel.io/deployment-name: "core-broker"
+  tkeel.io/plugin-port: "31234"
+  # Valid values are "user","manager"
+  # not case sensitive.
+  tkeel.io/tag: manager
+  # plugin version.
+  tkeel.io/version: v0.4.0
+
+# author.
+maintainers:
+  - email: tkeel@yunify.com
+    name: tkeel

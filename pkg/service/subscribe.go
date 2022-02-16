@@ -368,8 +368,11 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 
 	var count int64
 	if err = model.Count(&count, &subscribeCondition, &subscribeCondition).Error; err != nil {
-		log.Error("err:", err)
-		return nil, err
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error("err:", err)
+			return nil, err
+		}
+		count = 0
 	}
 	page.SetTotal(uint(count))
 	resp := &pb.ListSubscribeResponse{}

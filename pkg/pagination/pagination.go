@@ -16,7 +16,6 @@ var (
 	ErrInvalidIsDescending = errors.New("invalid is descending")
 	ErrInvalidParseData    = errors.New("invalid data type parsing")
 	ErrInvalidResponse     = errors.New("invalid response")
-	ErrNoTotal             = errors.New("no total data")
 )
 
 type Page struct {
@@ -93,10 +92,6 @@ func (p *Page) SetTotal(total uint) {
 }
 
 func (p Page) FillResponse(resp interface{}) error {
-	if p.Total == 0 {
-		return ErrNoTotal
-	}
-
 	t := reflect.TypeOf(resp)
 	v := reflect.ValueOf(resp)
 	for t.Kind() != reflect.Struct {

@@ -26,7 +26,7 @@ func SetUp(dsn string) error {
 		return err
 	}
 	db = connection
-	return db.AutoMigrate(&Subscribe{}, &SubscribeEntities{})
+	return db.AutoMigrate(&Subscribe{}, &SubscribeEntities{}, &SubscribeUsers{})
 }
 
 func DB() *gorm.DB {

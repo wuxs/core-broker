@@ -196,6 +196,40 @@ service Subscribe {
       }
     };
   };
+  rpc MySubscribed (MySubscribedRequest) returns (MySubscribedResponse) {
+    option (google.api.http) = {
+      post : "/subscribe/my"
+      body : "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "change subscribed to other subscription";
+      operation_id: "changeSubscribe";
+      tags: "subscribe";
+      responses: {
+        key: "200"
+        value: {
+          description: "OK";
+        }
+      }
+    };
+  };
+  rpc Subscribe (SubscribeRequest) returns (SubscribeResponse) {
+    option (google.api.http) = {
+      post : "/subscribe/{id}"
+      body : "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "create subscribe";
+      operation_id: "createSubscribe";
+      tags: "subscribe";
+      responses: {
+        key: "200"
+        value: {
+          description: "OK";
+        }
+      }
+    };
+  };
 }
 
 message SubscribeEntitiesByIDsRequest {
@@ -451,6 +485,72 @@ message ChangeSubscribedResponse {
   string status = 1
   [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "请求状态"}];
 }
+
+message MySubscribedRequest {
+  uint64 page_num = 1
+  [(google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Page number",
+    }];
+  uint64 page_size = 2
+  [(google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Page size",
+    }];
+  string order_by = 3
+  [(google.api.field_behavior) = OPTIONAL,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Order by",
+    }];
+  bool is_descending = 4
+  [(google.api.field_behavior) = OPTIONAL,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Is descending",
+    }];
+  string key_words = 5
+  [(google.api.field_behavior) = OPTIONAL,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Key words",
+    }];
+  string search_key =6
+  [(google.api.field_behavior) = OPTIONAL,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Search Key"
+    }];
+}
+message MySubscribedResponse {
+  uint64 total = 1
+  [(google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Total",
+    }];
+  uint64 page_num = 2
+  [(google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Page number",
+    }];
+  uint64 last_page = 3
+  [(google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Last page",
+    }];
+  uint64 page_size = 4
+  [(google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Page size",
+    }];
+  repeated SubscribeObject data = 5;
+}
+
+
+message SubscribeRequest {
+  uint64 id = 1
+  [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
+  bool option = 2
+  [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅选项:1->订阅，0->取消订阅"}];
+}
+message SubscribeResponse {string status = 1[(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "请求状态"}];}
+
 
 message Entity {
   string ID = 1

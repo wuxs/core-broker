@@ -29,6 +29,8 @@ type SubscribeClient interface {
 	GetSubscribe(ctx context.Context, in *GetSubscribeRequest, opts ...grpc.CallOption) (*GetSubscribeResponse, error)
 	ListSubscribe(ctx context.Context, in *ListSubscribeRequest, opts ...grpc.CallOption) (*ListSubscribeResponse, error)
 	ChangeSubscribed(ctx context.Context, in *ChangeSubscribedRequest, opts ...grpc.CallOption) (*ChangeSubscribedResponse, error)
+	MySubscribed(ctx context.Context, in *MySubscribedRequest, opts ...grpc.CallOption) (*MySubscribedResponse, error)
+	Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (*SubscribeResponse, error)
 }
 
 type subscribeClient struct {
@@ -138,6 +140,24 @@ func (c *subscribeClient) ChangeSubscribed(ctx context.Context, in *ChangeSubscr
 	return out, nil
 }
 
+func (c *subscribeClient) MySubscribed(ctx context.Context, in *MySubscribedRequest, opts ...grpc.CallOption) (*MySubscribedResponse, error) {
+	out := new(MySubscribedResponse)
+	err := c.cc.Invoke(ctx, "/api.subscribe.v1.Subscribe/MySubscribed", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *subscribeClient) Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (*SubscribeResponse, error) {
+	out := new(SubscribeResponse)
+	err := c.cc.Invoke(ctx, "/api.subscribe.v1.Subscribe/Subscribe", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SubscribeServer is the server API for Subscribe service.
 // All implementations must embed UnimplementedSubscribeServer
 // for forward compatibility
@@ -153,6 +173,8 @@ type SubscribeServer interface {
 	GetSubscribe(context.Context, *GetSubscribeRequest) (*GetSubscribeResponse, error)
 	ListSubscribe(context.Context, *ListSubscribeRequest) (*ListSubscribeResponse, error)
 	ChangeSubscribed(context.Context, *ChangeSubscribedRequest) (*ChangeSubscribedResponse, error)
+	MySubscribed(context.Context, *MySubscribedRequest) (*MySubscribedResponse, error)
+	Subscribe(context.Context, *SubscribeRequest) (*SubscribeResponse, error)
 	mustEmbedUnimplementedSubscribeServer()
 }
 
@@ -192,6 +214,12 @@ func (UnimplementedSubscribeServer) ListSubscribe(context.Context, *ListSubscrib
 }
 func (UnimplementedSubscribeServer) ChangeSubscribed(context.Context, *ChangeSubscribedRequest) (*ChangeSubscribedResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangeSubscribed not implemented")
+}
+func (UnimplementedSubscribeServer) MySubscribed(context.Context, *MySubscribedRequest) (*MySubscribedResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MySubscribed not implemented")
+}
+func (UnimplementedSubscribeServer) Subscribe(context.Context, *SubscribeRequest) (*SubscribeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Subscribe not implemented")
 }
 func (UnimplementedSubscribeServer) mustEmbedUnimplementedSubscribeServer() {}
 
@@ -404,6 +432,42 @@ func _Subscribe_ChangeSubscribed_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Subscribe_MySubscribed_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MySubscribedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubscribeServer).MySubscribed(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.subscribe.v1.Subscribe/MySubscribed",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubscribeServer).MySubscribed(ctx, req.(*MySubscribedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Subscribe_Subscribe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubscribeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubscribeServer).Subscribe(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.subscribe.v1.Subscribe/Subscribe",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubscribeServer).Subscribe(ctx, req.(*SubscribeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Subscribe_ServiceDesc is the grpc.ServiceDesc for Subscribe service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -454,6 +518,14 @@ var Subscribe_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ChangeSubscribed",
 			Handler:    _Subscribe_ChangeSubscribed_Handler,
+		},
+		{
+			MethodName: "MySubscribed",
+			Handler:    _Subscribe_MySubscribed_Handler,
+		},
+		{
+			MethodName: "Subscribe",
+			Handler:    _Subscribe_Subscribe_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

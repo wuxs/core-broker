@@ -1,24 +1,12 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "api/topic/v1/topic.proto",
+    "title": "api/subscribe/v1/subscribe.proto",
     "version": "version not set"
   },
   "tags": [
     {
-      "name": "Topic"
-    },
-    {
-      "name": "Openapi"
-    },
-    {
       "name": "Subscribe"
-    },
-    {
-      "name": "Subscribe"
-    },
-    {
-      "name": "Entity"
     }
   ],
   "consumes": [
@@ -28,106 +16,7 @@
     "application/json"
   ],
   "paths": {
-    "/addons/identify": {
-      "post": {
-        "summary": "openapi addons identify",
-        "operationId": "Identify",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/v1AddonsIdentifyResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1AddonsIdentifyRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Openapi"
-        ]
-      }
-    },
-    "/identify": {
-      "get": {
-        "summary": "openapi identify",
-        "operationId": "Identify",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/v1IdentifyResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "Openapi"
-        ]
-      }
-    },
-    "/status": {
-      "get": {
-        "summary": "openapi status",
-        "operationId": "Status",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/v1StatusResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "Openapi"
-        ]
-      }
-    },
     "/subscribe": {
-      "get": {
-        "operationId": "Subscribe_GetSubscribe",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/daprListTopicSubscriptionsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "Subscribe"
-        ]
-      },
       "post": {
         "summary": "create subscribe",
         "operationId": "createSubscribe",
@@ -193,6 +82,39 @@
         ]
       }
     },
+    "/subscribe/my": {
+      "post": {
+        "summary": "change subscribed to other subscription",
+        "operationId": "changeSubscribe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1MySubscribedResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1MySubscribedRequest"
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      }
+    },
     "/subscribe/{id}": {
       "get": {
         "summary": "get subscribe",
@@ -250,6 +172,51 @@
             "required": true,
             "type": "string",
             "format": "uint64"
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      },
+      "post": {
+        "summary": "create subscribe",
+        "operationId": "createSubscribe",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1SubscribeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "订阅ID",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "option": {
+                  "type": "boolean",
+                  "description": "订阅选项:1-\u003e订阅，0-\u003e取消订阅"
+                }
+              }
+            }
           }
         ],
         "tags": [
@@ -637,168 +604,9 @@
           "subscribe"
         ]
       }
-    },
-    "/tenant/disable": {
-      "post": {
-        "summary": "openapi tenant disable",
-        "operationId": "TenantDisable",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/v1TenantDisableResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1TenantDisableRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Openapi"
-        ]
-      }
-    },
-    "/tenant/enable": {
-      "post": {
-        "summary": "openapi tenant enable",
-        "operationId": "TenantEnable",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/v1TenantEnableResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1TenantEnableRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Openapi"
-        ]
-      }
-    },
-    "/topic": {
-      "post": {
-        "summary": "TopicEvent handler",
-        "operationId": "topicEventHandler",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/v1TopicEventResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1TopicEventRequest"
-            }
-          }
-        ],
-        "tags": [
-          "TopicEvent"
-        ]
-      }
-    },
-    "/ws": {
-      "get": {
-        "operationId": "Entity_GetEntity",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetEntityResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "Entity"
-        ]
-      }
     }
   },
   "definitions": {
-    "daprListTopicSubscriptionsResponse": {
-      "type": "object",
-      "properties": {
-        "subscriptions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/daprTopicSubscription"
-          },
-          "description": "The list of topics."
-        }
-      },
-      "description": "ListTopicSubscriptionsResponse is the message including the list of the subscribing topics."
-    },
-    "daprTopicSubscription": {
-      "type": "object",
-      "properties": {
-        "pubsub_name": {
-          "type": "string",
-          "description": "Required. The name of the pubsub containing the topic below to subscribe to."
-        },
-        "topic": {
-          "type": "string",
-          "title": "Required. The name of topic which will be subscribed"
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "title": "The optional properties used for this topic's subscription e.g. session id"
-        },
-        "route": {
-          "type": "string",
-          "description": "The optional routing rules to match against. In the gRPC interface, OnTopicEvent\nis still invoked but the matching path is sent in the TopicEventRequest."
-        }
-      },
-      "description": "TopicSubscription represents topic and metadata."
-    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -807,14 +615,6 @@
         }
       },
       "additionalProperties": {}
-    },
-    "protobufNullValue": {
-      "type": "string",
-      "enum": [
-        "NULL_VALUE"
-      ],
-      "default": "NULL_VALUE",
-      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\n The JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
     },
     "rpcStatus": {
       "type": "object",
@@ -834,54 +634,6 @@
         }
       }
     },
-    "v1AddonsIdentifyRequest": {
-      "type": "object",
-      "properties": {
-        "plugin": {
-          "$ref": "#/definitions/v1BriefPluginInfo"
-        },
-        "implemented_addons": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1ImplementedAddons"
-          }
-        }
-      },
-      "description": "*\nThe request value of the POST /v1/addons/identify,\nused when the plugin in the registration process implements\nthe extension point of the registered plugin."
-    },
-    "v1AddonsIdentifyResponse": {
-      "type": "object",
-      "properties": {
-        "res": {
-          "$ref": "#/definitions/v1Result"
-        }
-      },
-      "description": "*\nThe response value of the POST /v1/addons/identify,\nused when the plugin in the registration process implements\nthe extension point of the registered plugin."
-    },
-    "v1AddonsPoint": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "desc": {
-          "type": "string"
-        }
-      },
-      "description": "*\nmessage plugin declares extension point."
-    },
-    "v1BriefPluginInfo": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        }
-      },
-      "description": "*\nmessage brief plugin information."
-    },
     "v1ChangeSubscribedResponse": {
       "type": "object",
       "properties": {
@@ -890,33 +642,6 @@
           "description": "请求状态"
         }
       }
-    },
-    "v1ConsoleEntry": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "icon": {
-          "type": "string"
-        },
-        "path": {
-          "type": "string"
-        },
-        "entry": {
-          "type": "string"
-        },
-        "children": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1ConsoleEntry"
-          }
-        }
-      },
-      "description": "plugin console entry."
     },
     "v1CreateSubscribeRequest": {
       "type": "object",
@@ -993,9 +718,6 @@
         }
       }
     },
-    "v1GetEntityResponse": {
-      "type": "object"
-    },
     "v1GetSubscribeResponse": {
       "type": "object",
       "properties": {
@@ -1032,69 +754,6 @@
           "description": "订阅更新时间"
         }
       }
-    },
-    "v1IdentifyResponse": {
-      "type": "object",
-      "properties": {
-        "res": {
-          "$ref": "#/definitions/v1Result"
-        },
-        "plugin_id": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        },
-        "tkeel_version": {
-          "type": "string"
-        },
-        "addons_point": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1AddonsPoint"
-          }
-        },
-        "implemented_plugin": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1ImplementedPlugin"
-          }
-        },
-        "entries": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1ConsoleEntry"
-          }
-        }
-      },
-      "description": "*\nThe response value of the GET /v1/identify,\nused when the plugin registered."
-    },
-    "v1ImplementedAddons": {
-      "type": "object",
-      "properties": {
-        "addons_point": {
-          "type": "string"
-        },
-        "implemented_endpoint": {
-          "type": "string"
-        }
-      },
-      "description": "*\nmessage plugin declares implemented other plugin extension point."
-    },
-    "v1ImplementedPlugin": {
-      "type": "object",
-      "properties": {
-        "plugin": {
-          "$ref": "#/definitions/v1BriefPluginInfo"
-        },
-        "addons": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1ImplementedAddons"
-          }
-        }
-      },
-      "description": "*\nmessage plugin implemented other plugin."
     },
     "v1ListSubscribeEntitiesResponse": {
       "type": "object",
@@ -1236,50 +895,95 @@
         "page_size"
       ]
     },
-    "v1PluginStatus": {
-      "type": "string",
-      "enum": [
-        "UNKNOWN",
-        "WAIT_RUNNING",
-        "ERR_REGISTER",
-        "RUNNING"
-      ],
-      "default": "UNKNOWN",
-      "description": "*\nplugin state enum."
-    },
-    "v1Result": {
+    "v1MySubscribedRequest": {
       "type": "object",
       "properties": {
-        "ret": {
-          "$ref": "#/definitions/v1Retcode"
+        "page_num": {
+          "type": "string",
+          "format": "uint64",
+          "description": "Page number",
+          "required": [
+            "page_num"
+          ]
         },
-        "msg": {
-          "type": "string"
+        "page_size": {
+          "type": "string",
+          "format": "uint64",
+          "description": "Page size",
+          "required": [
+            "page_size"
+          ]
+        },
+        "order_by": {
+          "type": "string",
+          "description": "Order by"
+        },
+        "is_descending": {
+          "type": "boolean",
+          "description": "Is descending"
+        },
+        "key_words": {
+          "type": "string",
+          "description": "Key words"
+        },
+        "search_key": {
+          "type": "string",
+          "description": "Search Key"
         }
       },
-      "description": "*\nmessage result."
+      "required": [
+        "page_num",
+        "page_size"
+      ]
     },
-    "v1Retcode": {
-      "type": "string",
-      "enum": [
-        "OK",
-        "BAD_REQEUST",
-        "INTERNAL_ERROR"
-      ],
-      "default": "OK",
-      "description": "*\nerror code enum."
-    },
-    "v1StatusResponse": {
+    "v1MySubscribedResponse": {
       "type": "object",
       "properties": {
-        "res": {
-          "$ref": "#/definitions/v1Result"
+        "total": {
+          "type": "string",
+          "format": "uint64",
+          "description": "Total",
+          "required": [
+            "total"
+          ]
         },
-        "status": {
-          "$ref": "#/definitions/v1PluginStatus"
+        "page_num": {
+          "type": "string",
+          "format": "uint64",
+          "description": "Page number",
+          "required": [
+            "page_num"
+          ]
+        },
+        "last_page": {
+          "type": "string",
+          "format": "uint64",
+          "description": "Last page",
+          "required": [
+            "last_page"
+          ]
+        },
+        "page_size": {
+          "type": "string",
+          "format": "uint64",
+          "description": "Page size",
+          "required": [
+            "page_size"
+          ]
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1SubscribeObject"
+          }
         }
       },
-      "description": "*\nThe request value of the GET /v1/Status.\nused when the tkeel checks the status of plugins regularly."
+      "required": [
+        "total",
+        "page_num",
+        "last_page",
+        "page_size"
+      ]
     },
     "v1SubscribeEntitiesByGroupsResponse": {
       "type": "object",
@@ -1345,90 +1049,12 @@
         }
       }
     },
-    "v1TenantDisableRequest": {
-      "type": "object",
-      "properties": {
-        "tenant_id": {
-          "type": "string"
-        },
-        "extra": {
-          "type": "string",
-          "format": "byte"
-        }
-      },
-      "description": "*\nThe request value of the POST /v1/tenant/disable,\nused when the tenant administrator disables the plugin."
-    },
-    "v1TenantDisableResponse": {
-      "type": "object",
-      "properties": {
-        "res": {
-          "$ref": "#/definitions/v1Result"
-        }
-      },
-      "description": "*\nThe response value of the POST /v1/tenant/disable,\nused when the tenant administrator disables the plugin."
-    },
-    "v1TenantEnableRequest": {
-      "type": "object",
-      "properties": {
-        "tenant_id": {
-          "type": "string"
-        },
-        "extra": {
-          "type": "string",
-          "format": "byte"
-        }
-      },
-      "description": "*\nThe request value of the POST /v1/tenant/enable,\nused when the tenant administrator enables the plugin."
-    },
-    "v1TenantEnableResponse": {
-      "type": "object",
-      "properties": {
-        "res": {
-          "$ref": "#/definitions/v1Result"
-        }
-      },
-      "description": "*\nThe response value of the POST /v1/tenant/enable,\nused when the tenant administrator enables the plugin."
-    },
-    "v1TopicEventRequest": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "specversion": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        },
-        "source": {
-          "type": "string"
-        },
-        "datacontenttype": {
-          "type": "string"
-        },
-        "data": {
-          "type": "object"
-        },
-        "data_base64": {
-          "type": "string"
-        },
-        "subject": {
-          "type": "string"
-        },
-        "topic": {
-          "type": "string"
-        },
-        "pubsubname": {
-          "type": "string"
-        }
-      }
-    },
-    "v1TopicEventResponse": {
+    "v1SubscribeResponse": {
       "type": "object",
       "properties": {
         "status": {
-          "type": "string"
+          "type": "string",
+          "description": "请求状态"
         }
       }
     },

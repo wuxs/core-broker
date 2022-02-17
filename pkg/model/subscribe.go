@@ -45,9 +45,11 @@ func destroyRelevant() {
 }
 
 type SubscribeEntities struct {
-	SubscribeID uint   `gorm:"index,not null"`
 	EntityID    string `gorm:"index,not null"`
 	UniqueKey   string `gorm:"index, unique,size:255"`
+	SubscribeID uint   `gorm:"index,not null"`
+
+	Subscribe Subscribe
 }
 
 func (e *SubscribeEntities) AfterCreate(tx *gorm.DB) error {
@@ -55,11 +57,24 @@ func (e *SubscribeEntities) AfterCreate(tx *gorm.DB) error {
 		log.Error(err)
 		return err
 	}
+	if err := updateEntitySubscribeEndpoint(e.EntityID, e.Subscribe.Endpoint); err != nil {
+		return err
+	}
 	return nil
 }
 
 func createCoreSubscription(entityID string, topic string) error {
 	return coreClient.Subscribe(entityID, topic)
+}
+
+func updateEntitySubscribeEndpoint(entityID, endpoint string) error {
+	patchData := make([]map[string]interface{}, 0)
+	patchData = append(patchData, map[string]interface{}{
+		"operator": "replace",
+		"path":     "sysField._subscribeAddr",
+		"value":    endpoint,
+	})
+	return coreClient.PatchEntity(entityID, patchData)
 }
 
 func NewUndeleteable(content string) error {

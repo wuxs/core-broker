@@ -39,12 +39,12 @@ func NewSubscribeService() *SubscribeService {
 
 func (s *SubscribeService) SubscribeEntitiesByIDs(ctx context.Context, req *pb.SubscribeEntitiesByIDsRequest) (*pb.SubscribeEntitiesByIDsResponse, error) {
 	// verify Authentication in header and get user token map.
-	tokenInfo, err := s.client.GetTokenMap(ctx)
+	authUser, err := s.client.User(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
 	}
-	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: tokenInfo[Owner]}
+	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
 	validateSubscribeResult := model.DB().First(&subscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
@@ -61,7 +61,7 @@ func (s *SubscribeService) SubscribeEntitiesByIDs(ctx context.Context, req *pb.S
 	}
 
 	records := s.createSubscribeEntitiesRecords(req.Entities, &subscribe)
-	result := model.DB().Create(&records)
+	result := model.DB().Preload("Subscribe").Create(&records)
 	if result.Error != nil {
 		log.Error("err:", result.Error)
 		return nil, result.Error
@@ -74,12 +74,12 @@ func (s *SubscribeService) SubscribeEntitiesByIDs(ctx context.Context, req *pb.S
 }
 
 func (s *SubscribeService) SubscribeEntitiesByGroups(ctx context.Context, req *pb.SubscribeEntitiesByGroupsRequest) (*pb.SubscribeEntitiesByGroupsResponse, error) {
-	tokenInfo, err := s.client.GetTokenMap(ctx)
+	authUser, err := s.client.User(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
 	}
-	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: tokenInfo[Owner]}
+	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
 	validateSubscribeResult := model.DB().First(&subscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
@@ -98,7 +98,7 @@ func (s *SubscribeService) SubscribeEntitiesByGroups(ctx context.Context, req *p
 		return nil, err
 	}
 	records := s.createSubscribeEntitiesRecords(ids, &subscribe)
-	result := model.DB().Create(&records)
+	result := model.DB().Preload("Subscribe").Create(&records)
 	if result.Error != nil {
 		log.Error("err:", result.Error)
 		return nil, result.Error
@@ -110,12 +110,12 @@ func (s *SubscribeService) SubscribeEntitiesByGroups(ctx context.Context, req *p
 }
 
 func (s *SubscribeService) SubscribeEntitiesByModels(ctx context.Context, req *pb.SubscribeEntitiesByModelsRequest) (*pb.SubscribeEntitiesByModelsResponse, error) {
-	tokenInfo, err := s.client.GetTokenMap(ctx)
+	authUser, err := s.client.User(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
 	}
-	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: tokenInfo[Owner]}
+	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
 	validateSubscribeResult := model.DB().First(&subscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
@@ -134,7 +134,7 @@ func (s *SubscribeService) SubscribeEntitiesByModels(ctx context.Context, req *p
 		return nil, err
 	}
 	records := s.createSubscribeEntitiesRecords(ids, &subscribe)
-	result := model.DB().Create(&records)
+	result := model.DB().Preload("Subscribe").Create(&records)
 	if result.Error != nil {
 		log.Error("err:", result.Error)
 		return nil, result.Error
@@ -147,12 +147,12 @@ func (s *SubscribeService) SubscribeEntitiesByModels(ctx context.Context, req *p
 
 func (s *SubscribeService) UnsubscribeEntitiesByIDs(ctx context.Context, req *pb.UnsubscribeEntitiesByIDsRequest) (*pb.UnsubscribeEntitiesByIDsResponse, error) {
 	// verify Authentication in header and get user token map.
-	tokenInfo, err := s.client.GetTokenMap(ctx)
+	authUser, err := s.client.User(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
 	}
-	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: tokenInfo[Owner]}
+	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
 	if model.DB().First(&subscribe).RowsAffected == 0 {
 		err = errors.New("subscribe and user ID mismatch")
 		log.Error("err:", err)
@@ -167,12 +167,12 @@ func (s *SubscribeService) UnsubscribeEntitiesByIDs(ctx context.Context, req *pb
 	tx := model.DB().Begin()
 	for _, entityID := range req.Entities {
 		subscribeEntity := model.SubscribeEntities{
-			SubscribeID: subscribe.ID,
-			EntityID:    entityID,
-			UniqueKey:   subscribeuril.GenerateSubscribeTopic(subscribe.ID, entityID),
+			Subscribe: subscribe,
+			EntityID:  entityID,
+			UniqueKey: subscribeuril.GenerateSubscribeTopic(subscribe.ID, entityID),
 		}
 		result := tx.
-			Where("subscribe_id = ?", subscribeEntity.SubscribeID).
+			Where("subscribe_id = ?", subscribeEntity.Subscribe.ID).
 			Where("entity_id = ?", subscribeEntity.EntityID).
 			Where("unique_key = ?", subscribeEntity.UniqueKey).
 			Delete(&subscribeEntity)
@@ -188,12 +188,12 @@ func (s *SubscribeService) UnsubscribeEntitiesByIDs(ctx context.Context, req *pb
 }
 
 func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.ListSubscribeEntitiesRequest) (*pb.ListSubscribeEntitiesResponse, error) {
-	tokenInfo, err := s.client.GetTokenMap(ctx)
+	authUser, err := s.client.User(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
 	}
-	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: tokenInfo[Owner]}
+	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
 	validateSubscribeResult := model.DB().First(&subscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
@@ -208,7 +208,7 @@ func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.Li
 	}
 
 	var records []model.SubscribeEntities
-	result := model.Paginate(&records, page, model.SubscribeEntities{SubscribeID: subscribe.ID})
+	result := model.Paginate(&records, page, model.SubscribeEntities{Subscribe: subscribe})
 	if result.Error != nil {
 		log.Error("err:", result.Error)
 		return nil, err
@@ -239,26 +239,27 @@ func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.Li
 }
 
 func (s *SubscribeService) CreateSubscribe(ctx context.Context, req *pb.CreateSubscribeRequest) (*pb.CreateSubscribeResponse, error) {
-	tokenInfo, err := s.client.GetTokenMap(ctx)
+	authUser, err := s.client.User(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
 	}
 	sub := model.Subscribe{
-		UserID:      tokenInfo[Owner],
+		UserID:      authUser.ID,
 		Title:       req.Title,
 		Description: req.Description,
 	}
 
-	var count int
+	// TODO: lock the table
+	var count string
 	findResult := model.DB().Model(&model.Subscribe{}).Select("1").
-		Where(&model.Subscribe{UserID: tokenInfo[Owner]}).
+		Where(&model.Subscribe{UserID: authUser.ID, IsDefault: true}).
 		Limit(1).
 		Find(&count)
 	if errors.Is(
 		findResult.Error,
 		gorm.ErrRecordNotFound,
-	) || count == 0 || findResult.RowsAffected == 0 {
+	) || findResult.RowsAffected == 0 {
 		sub.IsDefault = true
 	}
 
@@ -277,12 +278,12 @@ func (s *SubscribeService) CreateSubscribe(ctx context.Context, req *pb.CreateSu
 }
 
 func (s *SubscribeService) UpdateSubscribe(ctx context.Context, req *pb.UpdateSubscribeRequest) (*pb.UpdateSubscribeResponse, error) {
-	tokenInfo, err := s.client.GetTokenMap(ctx)
+	authUser, err := s.client.User(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
 	}
-	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: tokenInfo[Owner]}
+	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
 	validateSubscribeResult := model.DB().First(&subscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
@@ -313,13 +314,13 @@ func (s *SubscribeService) UpdateSubscribe(ctx context.Context, req *pb.UpdateSu
 }
 
 func (s *SubscribeService) DeleteSubscribe(ctx context.Context, req *pb.DeleteSubscribeRequest) (*pb.DeleteSubscribeResponse, error) {
-	tokenInfo, err := s.client.GetTokenMap(ctx)
+	authUser, err := s.client.User(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
 	}
-	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: tokenInfo[Owner]}
-	validateSubscribeResult := model.DB().First(&subscribe)
+	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
+	validateSubscribeResult := model.DB().Model(&subscribe).Where(&subscribe).First(&subscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
 		log.Error("err:", err)
@@ -336,12 +337,12 @@ func (s *SubscribeService) DeleteSubscribe(ctx context.Context, req *pb.DeleteSu
 }
 
 func (s *SubscribeService) GetSubscribe(ctx context.Context, req *pb.GetSubscribeRequest) (*pb.GetSubscribeResponse, error) {
-	tokenInfo, err := s.client.GetTokenMap(ctx)
+	authUser, err := s.client.User(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
 	}
-	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: tokenInfo[Owner]}
+	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
 	validateSubscribeResult := model.DB().First(&subscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
@@ -366,7 +367,7 @@ func (s *SubscribeService) GetSubscribe(ctx context.Context, req *pb.GetSubscrib
 }
 
 func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscribeRequest) (*pb.ListSubscribeResponse, error) {
-	tokenInfo, err := s.client.GetTokenMap(ctx)
+	authUser, err := s.client.User(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
@@ -378,7 +379,7 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 	}
 	var subscribes []model.Subscribe
 	result := &gorm.DB{Error: errors.New("db query error")}
-	subscribeCondition := model.Subscribe{UserID: tokenInfo[Owner]}
+	subscribeCondition := model.Subscribe{UserID: authUser.ID}
 	if page.Required() {
 		result = model.Paginate(&subscribes, page, &subscribeCondition)
 	} else {
@@ -420,19 +421,19 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 }
 
 func (s SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeSubscribedRequest) (*pb.ChangeSubscribedResponse, error) {
-	tokenInfo, err := s.client.GetTokenMap(ctx)
+	authUser, err := s.client.User(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
 	}
-	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: tokenInfo[Owner]}
+	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
 	validateSubscribeResult := model.DB().First(&subscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
 		log.Error("err:", err)
 		return nil, err
 	}
-	targetSubscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.TargetID)}, UserID: tokenInfo[Owner]}
+	targetSubscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.TargetID)}, UserID: authUser.ID}
 	validateSubscribeResult = model.DB().First(&targetSubscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
@@ -444,14 +445,14 @@ func (s SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeSu
 	for i := range req.SelectedIDs {
 		entityID := req.SelectedIDs[i]
 		subscribeEntity := model.SubscribeEntities{
-			SubscribeID: subscribe.ID,
-			EntityID:    entityID,
-			UniqueKey:   subscribeuril.GenerateSubscribeTopic(subscribe.ID, entityID),
+			Subscribe: subscribe,
+			EntityID:  entityID,
+			UniqueKey: subscribeuril.GenerateSubscribeTopic(subscribe.ID, entityID),
 		}
 		targetSubscribeEntity := model.SubscribeEntities{
-			SubscribeID: targetSubscribe.ID,
-			EntityID:    entityID,
-			UniqueKey:   subscribeuril.GenerateSubscribeTopic(targetSubscribe.ID, entityID),
+			Subscribe: targetSubscribe,
+			EntityID:  entityID,
+			UniqueKey: subscribeuril.GenerateSubscribeTopic(targetSubscribe.ID, entityID),
 		}
 		if err = model.DB().Model(&subscribeEntity).Updates(targetSubscribeEntity).Error; err != nil {
 			errs = append(errs, err)
@@ -477,9 +478,9 @@ func (s *SubscribeService) createSubscribeEntitiesRecords(entityIDs []string, su
 	records := make([]model.SubscribeEntities, 0, len(entityIDs))
 	for _, entityID := range entityIDs {
 		subscribeEntity := model.SubscribeEntities{
-			SubscribeID: subscribe.ID,
-			EntityID:    entityID,
-			UniqueKey:   subscribeuril.GenerateSubscribeTopic(subscribe.ID, entityID),
+			Subscribe: *subscribe,
+			EntityID:  entityID,
+			UniqueKey: subscribeuril.GenerateSubscribeTopic(subscribe.ID, entityID),
 		}
 		records = append(records, subscribeEntity)
 	}

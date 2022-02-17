@@ -45,7 +45,7 @@ const PubsubName = "core-broker-pubsub"
 
 var Topic, _ = os.Hostname()
 
-func GetSubscriptionID(entityID string) string {
+func GenerateSubscriptionID(entityID string) string {
 	return entityID + "_" + Topic
 }
 

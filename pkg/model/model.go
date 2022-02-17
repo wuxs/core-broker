@@ -1,26 +1,34 @@
 package model
 
 import (
-	"github.com/tkeel-io/core-broker/pkg/pagination"
 	"os"
 	"sync"
 
+	corelib "github.com/tkeel-io/core-broker/pkg/core"
+	"github.com/tkeel-io/core-broker/pkg/pagination"
 	"github.com/tkeel-io/kit/log"
+
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
 const (
+	// schema like: "user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
 	dsnFromOSEnvKey = "DSN"
-	defaultMySQLDSN = "user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
 )
 
 type WhereOptions func() (query interface{}, args interface{})
 
 var _once sync.Once
 var db *gorm.DB
+var coreClient *corelib.Client
 
-func SetUp(dsn string) error {
+func Setup(coreClients ...*corelib.Client) error {
+	if len(coreClients) > 0 {
+		coreClient = coreClients[0]
+	}
+
+	dsn := os.Getenv(dsnFromOSEnvKey)
 	connection, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return err
@@ -32,10 +40,8 @@ func SetUp(dsn string) error {
 func DB() *gorm.DB {
 	if db == nil {
 		_once.Do(func() {
-			dsn := defaultMySQLDSN
-			dsn = os.Getenv(dsnFromOSEnvKey)
-			if err := SetUp(dsn); err != nil {
-				log.Error("SetUp DB Error: ", err)
+			if err := Setup(); err != nil {
+				log.Error("Setup DB Error: ", err)
 				return
 			}
 		})

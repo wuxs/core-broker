@@ -100,7 +100,7 @@ func (s *EntityService) handleRequest(c *websocket.Conn, stopChan chan struct{},
 		}
 		if _, ok := s.msgChanMap[entityID]; !ok {
 			s.msgChanMap[entityID] = make(map[string]chan []byte)
-			s.coreClient.Subscribe(entityID)
+			s.coreClient.Subscribe(entityID, "")
 		}
 		s.msgChanMap[entityID][clientID] = msgChan
 	}

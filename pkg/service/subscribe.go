@@ -2,7 +2,8 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"github.com/tkeel-io/core-broker/pkg/core"
+	"github.com/tkeel-io/core-broker/pkg/subscribeuril"
 
 	"github.com/pkg/errors"
 	pb "github.com/tkeel-io/core-broker/api/subscribe/v1"
@@ -14,11 +15,9 @@ import (
 )
 
 const (
-	SuccessStatus               = "SUCCESS"
-	RepeatedInsertionStatus     = "REPEATED INSERTION"
-	InvalidRecordDeletionStatus = "INVALID RECORD DELETION"
-	ErrPartialFailure           = "PARTIAL FAILURE"
-	FailureStatus               = "FAILURE"
+	SuccessStatus           = "SUCCESS"
+	RepeatedInsertionStatus = "REPEATED INSERTION"
+	ErrPartialFailure       = "PARTIAL FAILURE"
 )
 
 type SubscribeService struct {
@@ -27,6 +26,14 @@ type SubscribeService struct {
 }
 
 func NewSubscribeService() *SubscribeService {
+	coreClient, err := core.NewCoreClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err = model.Setup(coreClient); err != nil {
+		log.Fatal(err)
+	}
+
 	return &SubscribeService{client: NewCoreClient()}
 }
 
@@ -162,7 +169,7 @@ func (s *SubscribeService) UnsubscribeEntitiesByIDs(ctx context.Context, req *pb
 		subscribeEntity := model.SubscribeEntities{
 			SubscribeID: subscribe.ID,
 			EntityID:    entityID,
-			UniqueKey:   fmt.Sprintf("%d:%s", subscribe.ID, entityID),
+			UniqueKey:   subscribeuril.GenerateSubscribeTopic(subscribe.ID, entityID),
 		}
 		result := tx.
 			Where("subscribe_id = ?", subscribeEntity.SubscribeID).
@@ -243,16 +250,30 @@ func (s *SubscribeService) CreateSubscribe(ctx context.Context, req *pb.CreateSu
 		Description: req.Description,
 	}
 
-	resp := &pb.CreateSubscribeResponse{}
+	var count int
+	findResult := model.DB().Model(&model.Subscribe{}).Select("1").
+		Where(&model.Subscribe{UserID: tokenInfo[Owner]}).
+		Limit(1).
+		Find(&count)
+	if errors.Is(
+		findResult.Error,
+		gorm.ErrRecordNotFound,
+	) || count == 0 || findResult.RowsAffected == 0 {
+		sub.IsDefault = true
+	}
+
 	if err = model.DB().Create(&sub).Error; err != nil {
 		log.Error("err:", err)
 		return nil, err
 	}
-	resp.Id = uint64(sub.ID)
-	resp.Title = req.Title
-	resp.Description = req.Description
-	resp.Endpoint = sub.Endpoint
-	return resp, nil
+
+	return &pb.CreateSubscribeResponse{
+		Id:          uint64(sub.ID),
+		Title:       sub.Title,
+		Description: sub.Description,
+		Endpoint:    sub.Endpoint,
+		IsDefault:   sub.IsDefault,
+	}, nil
 }
 
 func (s *SubscribeService) UpdateSubscribe(ctx context.Context, req *pb.UpdateSubscribeRequest) (*pb.UpdateSubscribeResponse, error) {
@@ -286,6 +307,7 @@ func (s *SubscribeService) UpdateSubscribe(ctx context.Context, req *pb.UpdateSu
 		Title:       subscribe.Title,
 		Description: subscribe.Description,
 		Endpoint:    subscribe.Endpoint,
+		IsDefault:   subscribe.IsDefault,
 	}
 	return resp, nil
 }
@@ -338,6 +360,7 @@ func (s *SubscribeService) GetSubscribe(ctx context.Context, req *pb.GetSubscrib
 		Count:       uint64(count),
 		CreatedAt:   subscribe.CreatedAt.Unix(),
 		UpdatedAt:   subscribe.UpdatedAt.Unix(),
+		IsDefault:   subscribe.IsDefault,
 	}
 	return resp, nil
 }
@@ -388,6 +411,7 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 			Title:       subscribes[i].Title,
 			Description: subscribes[i].Description,
 			Endpoint:    subscribes[i].Endpoint,
+			IsDefault:   subscribes[i].IsDefault,
 		})
 	}
 	resp.Data = data
@@ -422,12 +446,12 @@ func (s SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeSu
 		subscribeEntity := model.SubscribeEntities{
 			SubscribeID: subscribe.ID,
 			EntityID:    entityID,
-			UniqueKey:   fmt.Sprintf("%d:%s", subscribe.ID, entityID),
+			UniqueKey:   subscribeuril.GenerateSubscribeTopic(subscribe.ID, entityID),
 		}
 		targetSubscribeEntity := model.SubscribeEntities{
 			SubscribeID: targetSubscribe.ID,
 			EntityID:    entityID,
-			UniqueKey:   fmt.Sprintf("%d:%s", targetSubscribe.ID, entityID),
+			UniqueKey:   subscribeuril.GenerateSubscribeTopic(targetSubscribe.ID, entityID),
 		}
 		if err = model.DB().Model(&subscribeEntity).Updates(targetSubscribeEntity).Error; err != nil {
 			errs = append(errs, err)
@@ -455,7 +479,7 @@ func (s *SubscribeService) createSubscribeEntitiesRecords(entityIDs []string, su
 		subscribeEntity := model.SubscribeEntities{
 			SubscribeID: subscribe.ID,
 			EntityID:    entityID,
-			UniqueKey:   fmt.Sprintf("%d:%s", subscribe.ID, entityID),
+			UniqueKey:   subscribeuril.GenerateSubscribeTopic(subscribe.ID, entityID),
 		}
 		records = append(records, subscribeEntity)
 	}

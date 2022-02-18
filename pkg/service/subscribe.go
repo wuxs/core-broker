@@ -70,6 +70,7 @@ func (s *SubscribeService) SubscribeEntitiesByIDs(ctx context.Context, req *pb.S
 		resp.Status = RepeatedInsertionStatus
 	}
 
+	s.saveCached(req.Entities)
 	return resp, nil
 }
 
@@ -208,14 +209,14 @@ func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.Li
 	}
 
 	var records []model.SubscribeEntities
-	result := model.Paginate(&records, page, model.SubscribeEntities{Subscribe: subscribe})
+	result := model.Paginate(&records, page, model.SubscribeEntities{SubscribeID: subscribe.ID})
 	if result.Error != nil {
 		log.Error("err:", result.Error)
 		return nil, err
 	}
 
 	resp := &pb.ListSubscribeEntitiesResponse{}
-	page.SetTotal(uint(len(cache)))
+	page.SetTotal(uint(len(records)))
 	err = page.FillResponse(resp)
 	if err != nil {
 		log.Error("err:", err)
@@ -488,6 +489,18 @@ func (s *SubscribeService) createSubscribeEntitiesRecords(entityIDs []string, su
 }
 
 var cache = map[string]*pb.Entity{}
+
+//TODO: remove when core details API get fixed
+func (s *SubscribeService) saveCached(ids []string) {
+	for _, id := range ids {
+		cache[id] = &pb.Entity{
+			ID:       id,
+			Name:     util.GenerateRandString(5),
+			Template: "unknown",
+			Group:    "unknown",
+		}
+	}
+}
 
 // TODO: implement getDeviceEntitiesIDsFromGroups
 func (s *SubscribeService) getDeviceEntitiesIDsFromGroups(ctx context.Context, groups []string) ([]string, error) {

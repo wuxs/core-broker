@@ -61,8 +61,8 @@ func GenerateSubscribeEndpoint() string {
 func GenerateRandString(len int) string {
 	b := make([]byte, len, len)
 	for i := 0; i < len; i++ {
-		mathRand.NewSource(time.Now().UnixNano())
-		index := mathRand.Intn(len)
+		source := mathRand.NewSource(time.Now().UnixNano())
+		index := mathRand.New(source).Intn(len)
 		b[i] = chars[index]
 	}
 

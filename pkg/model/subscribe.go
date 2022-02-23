@@ -40,7 +40,7 @@ func destroyEndpoint(endpoint string) {
 }
 
 func destroyRelevant() {
-	// TODO: destroy relevant
+	DB().Model(&SubscribeEntities{}).Delete(SubscribeEntities{})
 	log.Debug("destroyRelevant")
 }
 

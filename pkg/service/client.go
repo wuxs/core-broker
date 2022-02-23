@@ -23,7 +23,7 @@ const (
 	//  coreUrl string = "http://192.168.123.9:31438/v1/entities"
 	//  authUrl string = "http://192.168.123.11:30707/apis/security"
 
-	tokenKey string = "Authorization"
+	authorization string = "Authorization"
 
 	// default header key
 	tkeelAuthHeader = `x-tKeel-auth`
@@ -37,6 +37,12 @@ const (
 	Source    = "source"
 	UserToken = "user_token"
 )
+
+type User struct {
+	ID       string `json:"id"`
+	TenantID string `json:"tenant_id"`
+	Token    string `json:"token"`
+}
 
 type CoreClient struct {
 	//entity_create = "id={entity_id}&type={entity_type}&owner={user_id}&source={source}".format(**query)
@@ -60,12 +66,64 @@ func (c *CoreClient) GetCoreUrl(midUrl string, mapUrl map[string]string, entityT
 // GetTokenMap get token
 func (c *CoreClient) GetTokenMap(ctx context.Context) (map[string]string, error) {
 	header := transportHTTP.HeaderFromContext(ctx)
-	token, ok := header[tokenKey]
+	token, ok := header[authorization]
 	if !ok || len(token) == 0 {
 		return nil, errors.New("invalid Authorization")
 	}
 	// only use the first one
 	return c.parseToken(token[0])
+}
+
+// User get Auth user info
+func (c *CoreClient) User(ctx context.Context) (*User, error) {
+	token, ok := transportHTTP.HeaderFromContext(ctx)[authorization]
+	if !ok || len(token) == 0 {
+		return nil, errors.New("invalid Authorization")
+	}
+
+	url := authUrl + "/v1/oauth/authenticate"
+	req, err := http.NewRequest("GET", url, nil)
+	if nil != err {
+		return nil, err
+	}
+	req.Header.Add(authorization, token[0])
+	resp, err := http.DefaultClient.Do(req)
+	content, err := c.ParseResp(resp, err)
+	if nil != err {
+		log.Error("error parse token, ", err)
+		return nil, err
+	}
+	var ar interface{}
+	if err = json.Unmarshal(content, &ar); nil != err {
+		log.Error("resp Unmarshal error, ", err)
+		return nil, err
+	}
+
+	res, ok := ar.(map[string]interface{})
+	if !ok {
+		return nil, errors.New("auth error")
+	}
+	if res["code"].(float64) != 200 {
+		return nil, errors.New(res["msg"].(string))
+
+	}
+	respData := res["data"].(map[string]interface{})
+
+	id, ok := respData["user_id"].(string)
+	if !ok {
+		return nil, errors.New("parse token user_id data error")
+	}
+
+	tenantId, ok := respData["tenant_id"].(string)
+	if !ok {
+		return nil, errors.New("parse token tenant_id data error")
+	}
+
+	return &User{
+		ID:       id,
+		TenantID: tenantId,
+		Token:    token[0],
+	}, nil
 }
 
 func (c *CoreClient) parseToken(token string) (map[string]string, error) {
@@ -74,7 +132,7 @@ func (c *CoreClient) parseToken(token string) (map[string]string, error) {
 	if nil != err {
 		return nil, err
 	}
-	req.Header.Add(tokenKey, token)
+	req.Header.Add(authorization, token)
 	resp, err := http.DefaultClient.Do(req)
 	resp2, err2 := c.ParseResp(resp, err)
 	if nil != err2 {
@@ -204,7 +262,7 @@ func (c *CoreClient) CreatEntityToken(entityType, id, owner string, token string
 	if nil != err1 {
 		return "", err1
 	}
-	req.Header.Add(tokenKey, token)
+	req.Header.Add(authorization, token)
 	AddDefaultAuthHeader(req)
 	resp, er := http.DefaultClient.Do(req)
 	body, err2 := c.ParseResp(resp, er)

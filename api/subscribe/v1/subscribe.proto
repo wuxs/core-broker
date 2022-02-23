@@ -323,6 +323,8 @@ message SubscribeObject {
     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅描述"}];
   string endpoint = 4
     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅endpoint"}];
+  bool is_default = 5
+    [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "是否为默认订阅"}];
 }
 
 message CreateSubscribeRequest {
@@ -341,6 +343,8 @@ message CreateSubscribeResponse {
     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅描述"}];
   string endpoint = 4
     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅endpoint"}];
+  bool is_default = 5
+  [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "是否为默认订阅"}];
 }
 
 message UpdateSubscribeRequest {
@@ -360,6 +364,8 @@ message UpdateSubscribeResponse {
     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅描述"}];
   string endpoint = 4
     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅endpoint"}];
+  bool is_default = 5
+  [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "是否为默认订阅"}];
 }
 
 message DeleteSubscribeRequest {uint64 id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];}
@@ -381,6 +387,8 @@ message GetSubscribeResponse {
     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅创建时间"}];
   int64 updated_at = 7
     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅更新时间"}];
+  bool is_default = 8
+  [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "是否为默认订阅"}];
 }
 
 message ListSubscribeRequest {

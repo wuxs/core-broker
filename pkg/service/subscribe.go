@@ -97,8 +97,12 @@ func (s *SubscribeService) SubscribeEntitiesByGroups(ctx context.Context, req *p
 		log.Error("err:", err)
 		return nil, err
 	}
+	if len(ids) == 0 {
+		return nil, errors.New("no device found")
+	}
 	records := s.createSubscribeEntitiesRecords(ids, &subscribe)
-	result := model.DB().Preload("Subscribe").Create(&records)
+	log.Info("create subscribe entities records:", records)
+	result := model.DB().Preload("Subscribes").Create(&records)
 	if result.Error != nil {
 		log.Error("err:", result.Error)
 		return nil, result.Error
@@ -132,6 +136,9 @@ func (s *SubscribeService) SubscribeEntitiesByModels(ctx context.Context, req *p
 		err = errors.Wrap(err, "get device entities IDs from models IDs error")
 		log.Error("err:", err)
 		return nil, err
+	}
+	if len(ids) == 0 {
+		return nil, errors.New("no device found")
 	}
 	records := s.createSubscribeEntitiesRecords(ids, &subscribe)
 	result := model.DB().Preload("Subscribe").Create(&records)
@@ -496,6 +503,7 @@ func (s *SubscribeService) getDeviceEntitiesIDsFromGroups(ctx context.Context, g
 			log.Error("query device by device group err:", err)
 			return nil, err
 		}
+		log.Info("query device by device group:", string(bytes))
 		resp, err := deviceutil.ParseSearchResponse(bytes)
 		if err != nil {
 			log.Error("parse device search response err:", err)

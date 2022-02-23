@@ -20,7 +20,6 @@ require (
 )
 
 require (
-	github.com/apache/qpid-proton v0.0.0-20220211175800-ec535e772e02 // indirect
 	github.com/dapr/dapr v1.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-playground/form/v4 v4.2.0 // indirect

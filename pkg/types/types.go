@@ -17,6 +17,7 @@ limitations under the License.
 package types
 
 import (
+	"github.com/tkeel-io/core-broker/pkg/util"
 	"os"
 	"strings"
 
@@ -46,7 +47,7 @@ const PubsubName = "core-broker-pubsub"
 var Topic, _ = os.Hostname()
 
 func GenerateSubscriptionID(entityID string) string {
-	return entityID + "_" + Topic
+	return entityID + "_" + Topic + util.GenerateRandString(10)
 }
 
 func GetEntityID(subscriptionID string) string {

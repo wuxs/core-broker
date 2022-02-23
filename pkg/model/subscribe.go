@@ -30,7 +30,7 @@ func (s Subscribe) AfterDelete(tx *gorm.DB) error {
 		return NewUndeleteable("this is default subscribe")
 	}
 	destroyEndpoint(s.Endpoint)
-	destroyRelevant()
+	destroyRelevant(s.ID)
 	return nil
 }
 
@@ -39,8 +39,8 @@ func destroyEndpoint(endpoint string) {
 	log.Debug("endpoint: %s", endpoint)
 }
 
-func destroyRelevant() {
-	DB().Model(&SubscribeEntities{}).Delete(SubscribeEntities{})
+func destroyRelevant(id uint) {
+	DB().Where("entity_id = ?", id).Delete(SubscribeEntities{})
 	log.Debug("destroyRelevant")
 }
 

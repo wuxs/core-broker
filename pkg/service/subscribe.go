@@ -2,14 +2,14 @@ package service
 
 import (
 	"context"
-	"github.com/tkeel-io/core-broker/pkg/core"
-	"github.com/tkeel-io/core-broker/pkg/subscribeuril"
 
 	"github.com/pkg/errors"
 	pb "github.com/tkeel-io/core-broker/api/subscribe/v1"
+	"github.com/tkeel-io/core-broker/pkg/core"
+	"github.com/tkeel-io/core-broker/pkg/deviceutil"
 	"github.com/tkeel-io/core-broker/pkg/model"
 	"github.com/tkeel-io/core-broker/pkg/pagination"
-	"github.com/tkeel-io/core-broker/pkg/util"
+	"github.com/tkeel-io/core-broker/pkg/subscribeuril"
 	"github.com/tkeel-io/kit/log"
 	"gorm.io/gorm"
 )
@@ -70,7 +70,6 @@ func (s *SubscribeService) SubscribeEntitiesByIDs(ctx context.Context, req *pb.S
 		resp.Status = RepeatedInsertionStatus
 	}
 
-	s.saveCached(req.Entities)
 	return resp, nil
 }
 
@@ -92,7 +91,7 @@ func (s *SubscribeService) SubscribeEntitiesByGroups(ctx context.Context, req *p
 		Id:     req.Id,
 		Status: SuccessStatus,
 	}
-	ids, err := s.getDeviceEntitiesIDsFromGroups(ctx, req.Groups)
+	ids, err := s.getDeviceEntitiesIDsFromGroups(ctx, req.Groups, authUser.Token)
 	if err != nil {
 		err = errors.Wrap(err, "get device entities IDs from groups IDs error")
 		log.Error("err:", err)
@@ -128,7 +127,7 @@ func (s *SubscribeService) SubscribeEntitiesByModels(ctx context.Context, req *p
 		Id:     req.Id,
 		Status: SuccessStatus,
 	}
-	ids, err := s.getDeviceEntitiesIDsFromModels(ctx, req.Models)
+	ids, err := s.getDeviceEntitiesIDsFromTemplates(ctx, req.Models, authUser.Token)
 	if err != nil {
 		err = errors.Wrap(err, "get device entities IDs from models IDs error")
 		log.Error("err:", err)
@@ -228,7 +227,7 @@ func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.Li
 		entitiesIDs = append(entitiesIDs, records[i].EntityID)
 	}
 
-	data, err := s.deviceEntities(entitiesIDs)
+	data, err := s.deviceEntities(entitiesIDs, authUser.Token)
 	if err != nil {
 		log.Error("err:", err)
 		return nil, err
@@ -488,53 +487,76 @@ func (s *SubscribeService) createSubscribeEntitiesRecords(entityIDs []string, su
 	return records
 }
 
-var cache = map[string]*pb.Entity{}
+func (s *SubscribeService) getDeviceEntitiesIDsFromGroups(ctx context.Context, groups []string, token string) ([]string, error) {
+	var data []string
+	dc := deviceutil.NewClient(token)
+	for i := range groups {
+		bytes, err := dc.Search(deviceutil.DeviceSearch, deviceutil.Conditions{deviceutil.GroupQuery(groups[i]), deviceutil.DeviceTypeQuery()})
+		if err != nil {
+			log.Error("query device by device group err:", err)
+			return nil, err
+		}
+		resp, err := deviceutil.ParseSearchResponse(bytes)
+		if err != nil {
+			log.Error("parse device search response err:", err)
+			return nil, err
+		}
 
-//TODO: remove when core details API get fixed
-func (s *SubscribeService) saveCached(ids []string) {
-	for _, id := range ids {
-		cache[id] = &pb.Entity{
-			ID:       id,
-			Name:     util.GenerateRandString(5),
-			Template: "unknown",
-			Group:    "unknown",
+		for _, device := range resp.Data.ListDeviceObject.Items {
+			data = append(data, device.Id)
 		}
 	}
+	return data, nil
 }
 
-// TODO: implement getDeviceEntitiesIDsFromGroups
-func (s *SubscribeService) getDeviceEntitiesIDsFromGroups(ctx context.Context, groups []string) ([]string, error) {
+func (s *SubscribeService) getDeviceEntitiesIDsFromTemplates(ctx context.Context, templates []string, token string) ([]string, error) {
 	var data []string
-	for i := range groups {
-		device := pb.Entity{}
-		device.ID = util.GenerateRandString(10)
-		device.Name = util.GenerateRandString(5)
-		device.Group = groups[i]
-		cache[device.ID] = &device
-		data = append(data, device.ID)
+	dc := deviceutil.NewClient(token)
+	for i := range templates {
+		bytes, err := dc.Search(deviceutil.DeviceSearch, deviceutil.Conditions{deviceutil.TemplateQuery(templates[i])})
+		if err != nil {
+			log.Error("query device by device group err:", err)
+			return nil, err
+		}
+		resp, err := deviceutil.ParseSearchResponse(bytes)
+		if err != nil {
+			log.Error("parse device search response err:", err)
+			return nil, err
+		}
+
+		for _, device := range resp.Data.ListDeviceObject.Items {
+			data = append(data, device.Id)
+		}
 	}
 	return data, nil
 }
 
-// TODO: implement getDeviceEntitiesIDsFromModels
-func (s *SubscribeService) getDeviceEntitiesIDsFromModels(ctx context.Context, models []string) ([]string, error) {
-	var data []string
-	for i := range models {
-		device := pb.Entity{}
-		device.ID = util.GenerateRandString(10)
-		device.Name = util.GenerateRandString(5)
-		device.Template = models[i]
-		cache[device.ID] = &device
-		data = append(data, device.ID)
-	}
-	return data, nil
-}
-
-// TODO: implement deviceEntities
-func (s SubscribeService) deviceEntities(ids []string) ([]*pb.Entity, error) {
+func (s SubscribeService) deviceEntities(ids []string, token string) ([]*pb.Entity, error) {
 	entities := make([]*pb.Entity, 0, len(ids))
+	client := deviceutil.NewClient(token)
 	for _, id := range ids {
-		entity := cache[id]
+		bytes, err := client.Search(deviceutil.EntitySearch, deviceutil.Conditions{deviceutil.DeviceQuery(id)})
+		if err != nil {
+			log.Error("query device by device id err:", err)
+			return nil, err
+		}
+		resp, err := deviceutil.ParseSearchResponse(bytes)
+		if err != nil {
+			log.Error("parse device search response err:", err)
+			return nil, err
+		}
+		if len(resp.Data.ListDeviceObject.Items) == 0 {
+			log.Error("device not found:", id)
+			return nil, errors.New("device not found")
+		}
+		entity := &pb.Entity{
+			ID:        id,
+			Name:      resp.Data.ListDeviceObject.Items[0].Properties.BasicInfo.Name,
+			Template:  resp.Data.ListDeviceObject.Items[0].Properties.BasicInfo.TemplateName,
+			Group:     resp.Data.ListDeviceObject.Items[0].Properties.BasicInfo.ParentName,
+			Status:    resp.Data.ListDeviceObject.Items[0].Properties.SysField.Status,
+			UpdatedAt: resp.Data.ListDeviceObject.Items[0].Properties.SysField.UpdatedAt,
+		}
 		entities = append(entities, entity)
 	}
 	return entities, nil

@@ -3,7 +3,7 @@ package deviceutil
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+	"github.com/tkeel-io/kit/log"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -39,7 +39,8 @@ func (c Client) Search(url Service, conditions Conditions) ([]byte, error) {
 		Conditions: conditions,
 	}
 	content, err := json.Marshal(&searchRequest)
-	fmt.Println(string(content))
+	log.Info("Device Search Request URL:", url)
+	log.Info("Device Search Request Body:", string(content))
 	if err != nil {
 		return nil, err
 	}

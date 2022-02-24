@@ -450,9 +450,9 @@ message ListSubscribeResponse {
 message ChangeSubscribedRequest {
   uint64 id = 1
   [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "当前订阅ID"}];
-  uint64 targetID = 2
+  uint64 targetId = 2
   [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "目标订阅ID"}];
-  repeated string selectedIDs = 3
+  repeated string selectedIds = 3
   [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "被移动的设备ID"}];
 }
 message ChangeSubscribedResponse {

@@ -178,12 +178,12 @@
             "schema": {
               "type": "object",
               "properties": {
-                "targetID": {
+                "targetId": {
                   "type": "string",
                   "format": "uint64",
                   "description": "目标订阅ID"
                 },
-                "selectedIDs": {
+                "selectedIds": {
                   "type": "array",
                   "items": {
                     "type": "string"

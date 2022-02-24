@@ -433,6 +433,14 @@ func (s SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeSu
 		log.Error("err:", err)
 		return nil, err
 	}
+	if len(req.SelectedIds) == 0 {
+		return nil, errors.New("selectedIds is empty")
+	}
+
+	if req.TargetId == 0 {
+		return nil, errors.New("targetId is empty")
+	}
+
 	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
 	validateSubscribeResult := model.DB().First(&subscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
@@ -440,7 +448,7 @@ func (s SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeSu
 		log.Error("err:", err)
 		return nil, err
 	}
-	targetSubscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.TargetID)}, UserID: authUser.ID}
+	targetSubscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.TargetId)}, UserID: authUser.ID}
 	validateSubscribeResult = model.DB().First(&targetSubscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
@@ -449,31 +457,37 @@ func (s SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeSu
 	}
 
 	errs := []error{}
-	for i := range req.SelectedIDs {
-		entityID := req.SelectedIDs[i]
+	for i := range req.SelectedIds {
+		entityID := req.SelectedIds[i]
 		subscribeEntity := model.SubscribeEntities{
-			Subscribe: subscribe,
-			EntityID:  entityID,
-			UniqueKey: subscribeuril.GenerateSubscribeTopic(subscribe.ID, entityID),
+			SubscribeID: subscribe.ID,
+			Subscribe:   subscribe,
+			EntityID:    entityID,
+			UniqueKey:   subscribeuril.GenerateSubscribeTopic(subscribe.ID, entityID),
 		}
 		targetSubscribeEntity := model.SubscribeEntities{
-			Subscribe: targetSubscribe,
-			EntityID:  entityID,
-			UniqueKey: subscribeuril.GenerateSubscribeTopic(targetSubscribe.ID, entityID),
+			Subscribe:   targetSubscribe,
+			SubscribeID: targetSubscribe.ID,
+			EntityID:    entityID,
+			UniqueKey:   subscribeuril.GenerateSubscribeTopic(targetSubscribe.ID, entityID),
 		}
-		if err = model.DB().Model(&subscribeEntity).Updates(targetSubscribeEntity).Error; err != nil {
+		if err := model.DB().Debug().Where(targetSubscribeEntity).First(&targetSubscribeEntity).Error; !errors.Is(err, gorm.ErrRecordNotFound) {
+			errs = append(errs, errors.New("target subscribe entity already exists"))
+			continue
+		}
+		if err = model.DB().Debug().Model(&subscribeEntity).Where(subscribeEntity).Updates(targetSubscribeEntity).Error; err != nil {
 			errs = append(errs, err)
 		}
 	}
 
-	if len(errs) == len(req.SelectedIDs) {
+	if len(errs) == len(req.SelectedIds) && len(errs) > 0 {
 		err = errors.Wrap(errs[0], "change subscribed failed")
 		log.Error("err:", err)
 		return nil, err
 	}
 
 	resp := &pb.ChangeSubscribedResponse{Status: SuccessStatus}
-	if len(errs) < len(req.SelectedIDs) {
+	if len(errs) != 0 {
 		resp.Status = ErrPartialFailure
 	}
 
@@ -548,22 +562,22 @@ func (s SubscribeService) deviceEntities(ids []string, token string) ([]*pb.Enti
 			log.Error("query device by device id err:", err)
 			return nil, err
 		}
-		resp, err := deviceutil.ParseSearchResponse(bytes)
+		resp, err := deviceutil.ParseSearchEntityResponse(bytes)
 		if err != nil {
 			log.Error("parse device search response err:", err)
 			return nil, err
 		}
-		if len(resp.Data.ListDeviceObject.Items) == 0 {
+		if len(resp.Data.Items) == 0 {
 			log.Error("device not found:", id)
 			return nil, errors.New("device not found")
 		}
 		entity := &pb.Entity{
 			ID:        id,
-			Name:      resp.Data.ListDeviceObject.Items[0].Properties.BasicInfo.Name,
-			Template:  resp.Data.ListDeviceObject.Items[0].Properties.BasicInfo.TemplateName,
-			Group:     resp.Data.ListDeviceObject.Items[0].Properties.BasicInfo.ParentName,
-			Status:    resp.Data.ListDeviceObject.Items[0].Properties.SysField.Status,
-			UpdatedAt: resp.Data.ListDeviceObject.Items[0].Properties.SysField.UpdatedAt,
+			Name:      resp.Data.Items[0].Properties.BasicInfo.Name,
+			Template:  resp.Data.Items[0].Properties.BasicInfo.TemplateName,
+			Group:     resp.Data.Items[0].Properties.BasicInfo.ParentName,
+			Status:    resp.Data.Items[0].Properties.SysField.Status,
+			UpdatedAt: resp.Data.Items[0].Properties.SysField.UpdatedAt,
 		}
 		entities = append(entities, entity)
 	}

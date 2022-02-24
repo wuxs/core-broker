@@ -40,7 +40,7 @@ func destroyEndpoint(endpoint string) {
 }
 
 func destroyRelevant(id uint) {
-	DB().Where("entity_id = ?", id).Delete(SubscribeEntities{})
+	DB().Delete(SubscribeEntities{}, "subscribe_id = ?", id)
 	log.Debug("destroyRelevant")
 }
 

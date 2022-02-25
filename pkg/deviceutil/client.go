@@ -3,10 +3,11 @@ package deviceutil
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/tkeel-io/kit/log"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/tkeel-io/kit/log"
 )
 
 type Service string
@@ -16,8 +17,8 @@ func (s Service) String() string {
 }
 
 const (
-	DeviceSearch Service = "http://192.168.123.11:30707/apis/tkeel-device/v1/search"
-	EntitySearch Service = "http://192.168.123.11:30707/apis/core/v1/entities/search"
+	DeviceSearch Service = "http://localhost:3500/v1.0/invoke/keel/method/apis/tkeel-device/v1/search"
+	EntitySearch Service = "http://localhost:3500/v1.0/invoke/keel/method/apis/core/v1/entities/search"
 )
 
 type Client struct {

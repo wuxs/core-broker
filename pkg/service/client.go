@@ -7,13 +7,14 @@ import (
 	json "encoding/json"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/tkeel-io/kit/log"
-	transportHTTP "github.com/tkeel-io/kit/transport/http"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/tkeel-io/kit/log"
+	transportHTTP "github.com/tkeel-io/kit/transport/http"
 )
 
 const (
@@ -103,7 +104,7 @@ func (c *CoreClient) User(ctx context.Context) (*User, error) {
 	if !ok {
 		return nil, errors.New("auth error")
 	}
-	if res["code"].(float64) != 200 {
+	if res["code"].(string) != "io.tkeel.SUCCESS" {
 		return nil, errors.New(res["msg"].(string))
 
 	}

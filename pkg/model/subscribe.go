@@ -5,6 +5,7 @@ import (
 	"github.com/tkeel-io/core-broker/pkg/util"
 	"github.com/tkeel-io/kit/log"
 	"gorm.io/gorm"
+	"strconv"
 	"strings"
 )
 
@@ -58,7 +59,9 @@ func (e *SubscribeEntities) AfterCreate(tx *gorm.DB) error {
 		log.Error(err)
 		return err
 	}
-	if err := updateEntitySubscribeEndpoint(e.EntityID, e.Subscribe.Endpoint, add); err != nil {
+	if err := updateEntitySubscribeEndpoint(e.EntityID,
+		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10), e.Subscribe.Endpoint}, "@"),
+		add); err != nil {
 		return err
 	}
 	return nil
@@ -69,7 +72,9 @@ func (e *SubscribeEntities) AfterDelete(tx *gorm.DB) error {
 		log.Error(err)
 		return err
 	}
-	if err := updateEntitySubscribeEndpoint(e.EntityID, e.Subscribe.Endpoint, reduce); err != nil {
+	if err := updateEntitySubscribeEndpoint(e.EntityID,
+		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10), e.Subscribe.Endpoint}, "@"),
+		reduce); err != nil {
 		return err
 	}
 	return nil

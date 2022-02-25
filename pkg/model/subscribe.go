@@ -104,13 +104,13 @@ func updateEntitySubscribeEndpoint(entityID, endpoint string, c choice) error {
 		subscribeAddr = strings.Join([]string{device.Properties.SysField.SubscribeAddr, endpoint}, separator)
 	case reduce:
 		addrs := strings.Split(device.Properties.SysField.SubscribeAddr, separator)
+		validAddresses := make([]string, 0, len(addrs))
 		for i := range addrs {
-			if addrs[i] == endpoint {
-				addrs = append(addrs[:i], addrs[i+1:]...)
-				break
+			if addrs[i] != endpoint {
+				validAddresses = append(validAddresses, addrs[i])
 			}
 		}
-		subscribeAddr = strings.Join(addrs, separator)
+		subscribeAddr = strings.Join(validAddresses, separator)
 	}
 
 	patchData = append(patchData, map[string]interface{}{

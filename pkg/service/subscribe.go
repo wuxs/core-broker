@@ -397,21 +397,6 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 		return nil, result.Error
 	}
 
-	var count int64
-	if err = model.Count(&count, &subscribeCondition, &subscribeCondition).Error; err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Error("err:", err)
-			return nil, err
-		}
-		count = 0
-	}
-	page.SetTotal(uint(count))
-	resp := &pb.ListSubscribeResponse{}
-	if err = page.FillResponse(resp); err != nil {
-		log.Error("err:", err)
-		return nil, err
-	}
-
 	data := make([]*pb.SubscribeObject, 0, len(subscribes))
 	for i := range subscribes {
 		data = append(data, &pb.SubscribeObject{
@@ -422,20 +407,43 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 			IsDefault:   subscribes[i].IsDefault,
 		})
 	}
-	resp.Data = data
 
+	resp := &pb.ListSubscribeResponse{}
 	// for template create default subscribe
 	if len(subscribes) == 0 {
 		createRequest := &pb.CreateSubscribeRequest{
 			Title:       "Default Title",
 			Description: "This is default subscribe.",
 		}
-		_, err = s.CreateSubscribe(ctx, createRequest)
+		subscribeResponse, err := s.CreateSubscribe(ctx, createRequest)
 		if err != nil {
 			log.Error("create default subscribe failed:", err)
 			return nil, err
 		}
+		data = append(data, &pb.SubscribeObject{
+			Id:          subscribeResponse.Id,
+			Title:       subscribeResponse.Title,
+			Description: subscribeResponse.Description,
+			Endpoint:    subscribeResponse.Endpoint,
+			IsDefault:   subscribeResponse.IsDefault,
+		})
 	}
+
+	var count int64
+	if err = model.Count(&count, &subscribeCondition, &subscribeCondition).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Error("err:", err)
+			return nil, err
+		}
+		count = 0
+	}
+	page.SetTotal(uint(count))
+	if err = page.FillResponse(resp); err != nil {
+		log.Error("err:", err)
+		return nil, err
+	}
+
+	resp.Data = data
 
 	return resp, nil
 }

@@ -424,6 +424,19 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 	}
 	resp.Data = data
 
+	// for template create default subscribe
+	if len(subscribes) == 0 {
+		createRequest := &pb.CreateSubscribeRequest{
+			Title:       "Default Title",
+			Description: "This is default subscribe.",
+		}
+		_, err = s.CreateSubscribe(ctx, createRequest)
+		if err != nil {
+			log.Error("create default subscribe failed:", err)
+			return nil, err
+		}
+	}
+
 	return resp, nil
 }
 

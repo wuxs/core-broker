@@ -5,6 +5,7 @@ import (
 	"github.com/tkeel-io/core-broker/pkg/util"
 	"github.com/tkeel-io/kit/log"
 	"gorm.io/gorm"
+	"strings"
 )
 
 var ErrUndeleteable = errors.New("undeleteable")
@@ -57,7 +58,18 @@ func (e *SubscribeEntities) AfterCreate(tx *gorm.DB) error {
 		log.Error(err)
 		return err
 	}
-	if err := updateEntitySubscribeEndpoint(e.EntityID, e.Subscribe.Endpoint); err != nil {
+	if err := updateEntitySubscribeEndpoint(e.EntityID, e.Subscribe.Endpoint, add); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (e *SubscribeEntities) AfterDelete(tx *gorm.DB) error {
+	if err := deleteCoreSubscription(e.EntityID); err != nil {
+		log.Error(err)
+		return err
+	}
+	if err := updateEntitySubscribeEndpoint(e.EntityID, e.Subscribe.Endpoint, reduce); err != nil {
 		return err
 	}
 	return nil
@@ -67,12 +79,44 @@ func createCoreSubscription(entityID string, topic string) error {
 	return coreClient.Subscribe(entityID, topic)
 }
 
-func updateEntitySubscribeEndpoint(entityID, endpoint string) error {
+func deleteCoreSubscription(entityID string) error {
+	return coreClient.UnSubscribe(entityID)
+}
+
+type choice uint8
+
+const (
+	add choice = iota + 1
+	reduce
+)
+
+func updateEntitySubscribeEndpoint(entityID, endpoint string, c choice) error {
+	separator := ","
 	patchData := make([]map[string]interface{}, 0)
+
+	device, err := coreClient.GetEntity(entityID)
+	if err != nil {
+		return err
+	}
+	subscribeAddr := endpoint
+	switch c {
+	case add:
+		subscribeAddr = strings.Join([]string{device.Properties.SysField.SubscribeAddr, endpoint}, separator)
+	case reduce:
+		addrs := strings.Split(device.Properties.SysField.SubscribeAddr, separator)
+		for i := range addrs {
+			if addrs[i] == endpoint {
+				addrs = append(addrs[:i], addrs[i+1:]...)
+				break
+			}
+		}
+		subscribeAddr = strings.Join(addrs, separator)
+	}
+
 	patchData = append(patchData, map[string]interface{}{
 		"operator": "replace",
 		"path":     "sysField._subscribeAddr",
-		"value":    endpoint,
+		"value":    subscribeAddr,
 	})
 	return coreClient.PatchEntity(entityID, patchData)
 }

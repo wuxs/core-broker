@@ -234,7 +234,6 @@ func (c *CoreClient) ParseResp(resp *http.Response, err error) ([]byte, error) {
 		return body, err
 	}
 
-	log.Debug("receive resp, ", string(body))
 	if resp.StatusCode != 200 {
 		log.Error("bad status ", resp.StatusCode)
 		return body, errors.New(resp.Status)

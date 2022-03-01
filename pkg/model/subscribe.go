@@ -55,13 +55,17 @@ type SubscribeEntities struct {
 }
 
 func (e *SubscribeEntities) AfterCreate(tx *gorm.DB) error {
+	log.Debug("creation of SubscribeEntities:", *e)
 	if err := createCoreSubscription(e.EntityID, e.UniqueKey); err != nil {
+		err = errors.Wrap(err, "create core subscription err:")
 		log.Error(err)
 		return err
 	}
 	if err := updateEntitySubscribeEndpoint(e.EntityID,
 		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10), e.Subscribe.Endpoint}, "@"),
 		add); err != nil {
+		err = errors.Wrap(err, "update entity subscribe endpoint err:")
+		log.Error(err)
 		return err
 	}
 	return nil
@@ -101,6 +105,7 @@ func updateEntitySubscribeEndpoint(entityID, endpoint string, c choice) error {
 
 	device, err := coreClient.GetEntity(entityID)
 	if err != nil {
+		log.Error("get entity err:", err)
 		return err
 	}
 	subscribeAddr := endpoint
@@ -123,7 +128,12 @@ func updateEntitySubscribeEndpoint(entityID, endpoint string, c choice) error {
 		"path":     "sysField._subscribeAddr",
 		"value":    subscribeAddr,
 	})
-	return coreClient.PatchEntity(entityID, patchData)
+	if err = coreClient.PatchEntity(entityID, patchData); err != nil {
+		err = errors.Wrap(err, "patch entity err:")
+		return err
+	}
+
+	return nil
 }
 
 func NewUndeleteable(content string) error {

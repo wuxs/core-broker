@@ -196,6 +196,40 @@ service Subscribe {
       }
     };
   };
+  rpc ValidateSubscribed (ValidateSubscribedRequest) returns (ValidateSubscribedResponse) {
+    option (google.api.http) = {
+      post : "/validate/subscribe"
+      body : "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "validate subscribe topic is user request";
+      operation_id: "ValidateSubscribed";
+      tags: "subscribe";
+      responses: {
+        key: "200"
+        value: {
+          description: "OK";
+        }
+      }
+    };
+  };
+  rpc SubscribeByDevice (SubscribeByDeviceRequest) returns (SubscribeByDeviceResponse) {
+    option (google.api.http) = {
+      post : "/subscribe/device/{id}"
+      body : "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "subscribe by device";
+      operation_id: "SubscribeByDevice";
+      tags: "subscribe";
+      responses: {
+        key: "200"
+        value: {
+          description: "OK";
+        }
+      }
+    };
+  };
 }
 
 message SubscribeEntitiesByIDsRequest {
@@ -473,4 +507,26 @@ message Entity {
     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "group"}];
   int64 updated_at = 6
     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "update time"}];
+}
+
+message ValidateSubscribedRequest {
+  string topic = 1
+    [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "topic"}];
+}
+
+message ValidateSubscribedResponse {
+  string status = 1
+    [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "status"}];
+}
+
+message SubscribeByDeviceRequest {
+  string id = 1
+    [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "device id"}];
+  repeated uint64 subscribe_ids = 2
+    [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "subscribe ids"}];
+}
+
+message SubscribeByDeviceResponse {
+  string status = 1
+    [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "status"}];
 }

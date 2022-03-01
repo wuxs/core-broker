@@ -5,7 +5,6 @@ import (
 
 	"github.com/pkg/errors"
 	pb "github.com/tkeel-io/core-broker/api/subscribe/v1"
-	"github.com/tkeel-io/core-broker/pkg/core"
 	"github.com/tkeel-io/core-broker/pkg/deviceutil"
 	"github.com/tkeel-io/core-broker/pkg/model"
 	"github.com/tkeel-io/core-broker/pkg/pagination"
@@ -26,11 +25,7 @@ type SubscribeService struct {
 }
 
 func NewSubscribeService() *SubscribeService {
-	coreClient, err := core.NewCoreClient()
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err = model.Setup(coreClient); err != nil {
+	if err := model.Setup(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -102,7 +97,7 @@ func (s *SubscribeService) SubscribeEntitiesByGroups(ctx context.Context, req *p
 	}
 	records := s.createSubscribeEntitiesRecords(ids, &subscribe)
 	log.Info("create subscribe entities records:", records)
-	result := model.DB().Preload("Subscribes").Create(&records)
+	result := model.DB().Create(&records)
 	if result.Error != nil {
 		log.Error("err:", result.Error)
 		return nil, result.Error
@@ -141,7 +136,7 @@ func (s *SubscribeService) SubscribeEntitiesByModels(ctx context.Context, req *p
 		return nil, errors.New("no device found")
 	}
 	records := s.createSubscribeEntitiesRecords(ids, &subscribe)
-	result := model.DB().Preload("Subscribe").Create(&records)
+	result := model.DB().Create(&records)
 	if result.Error != nil {
 		log.Error("err:", result.Error)
 		return nil, result.Error
@@ -448,7 +443,7 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 	return resp, nil
 }
 
-func (s SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeSubscribedRequest) (*pb.ChangeSubscribedResponse, error) {
+func (s *SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeSubscribedRequest) (*pb.ChangeSubscribedResponse, error) {
 	authUser, err := s.client.User(ctx)
 	if nil != err {
 		log.Error("err:", err)
@@ -512,6 +507,67 @@ func (s SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeSu
 		resp.Status = ErrPartialFailure
 	}
 
+	return resp, nil
+}
+
+func (s *SubscribeService) ValidateSubscribed(ctx context.Context, req *pb.ValidateSubscribedRequest) (*pb.ValidateSubscribedResponse, error) {
+	authUser, err := s.client.User(ctx)
+	if nil != err {
+		log.Error("err:", err)
+		return nil, err
+	}
+	if req.Topic == "" {
+		return nil, errors.New("topic is empty")
+	}
+
+	subscribe := model.Subscribe{Endpoint: req.Topic, UserID: authUser.ID}
+	validateSubscribeResult := model.DB().First(&subscribe)
+	if validateSubscribeResult.RowsAffected == 0 {
+		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user mismatch")
+		log.Error("invalid error:", err)
+		return nil, err
+	}
+	resp := &pb.ValidateSubscribedResponse{Status: SuccessStatus}
+
+	return resp, nil
+}
+
+func (s *SubscribeService) SubscribeByDevice(ctx context.Context, req *pb.SubscribeByDeviceRequest) (*pb.SubscribeByDeviceResponse, error) {
+	authUser, err := s.client.User(ctx)
+	if nil != err {
+		log.Error("err:", err)
+		return nil, err
+	}
+	if req.Id == "" {
+		return nil, errors.New("invalid device id")
+	}
+	if req.SubscribeIds == nil || len(req.SubscribeIds) == 0 {
+		return nil, errors.New("invalid subscribe ids")
+	}
+
+	var count int
+	validateSubscribeResult := model.DB().Select("1").
+		Where("id IN ?", req.SubscribeIds).
+		Where("user_id = ?", authUser).Find(&count)
+	if validateSubscribeResult.RowsAffected != int64(len(req.SubscribeIds)) {
+		err = errors.Wrap(validateSubscribeResult.Error, "device and user mismatch")
+		log.Error("err:", err)
+		return nil, err
+	}
+	subscribeEntities := make([]model.SubscribeEntities, len(req.SubscribeIds))
+	for i := range req.SubscribeIds {
+		subscribeEntities[i] = model.SubscribeEntities{
+			SubscribeID: uint(req.SubscribeIds[i]),
+			EntityID:    req.Id,
+			UniqueKey:   subscribeuril.GenerateSubscribeTopic(uint(req.SubscribeIds[i]), req.Id),
+		}
+	}
+	if err = model.DB().Debug().Create(&subscribeEntities).Error; err != nil {
+		log.Error("create err:", err)
+		return nil, err
+	}
+
+	resp := &pb.SubscribeByDeviceResponse{Status: SuccessStatus}
 	return resp, nil
 }
 

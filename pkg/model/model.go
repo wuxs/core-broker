@@ -4,7 +4,7 @@ import (
 	"os"
 	"sync"
 
-	corelib "github.com/tkeel-io/core-broker/pkg/core"
+	"github.com/tkeel-io/core-broker/pkg/core"
 	"github.com/tkeel-io/core-broker/pkg/pagination"
 	"github.com/tkeel-io/kit/log"
 
@@ -21,17 +21,19 @@ type WhereOptions func() (query interface{}, args interface{})
 
 var _once sync.Once
 var db *gorm.DB
-var coreClient *corelib.Client
+var coreClient *core.Client
 
-func Setup(coreClients ...*corelib.Client) error {
-	if len(coreClients) > 0 {
-		coreClient = coreClients[0]
+func Setup() error {
+	var err error
+	coreClient, err = core.NewCoreClient()
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	dsn := os.Getenv(dsnFromOSEnvKey)
 	connection, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 	db = connection
 	return db.AutoMigrate(&Subscribe{}, &SubscribeEntities{})

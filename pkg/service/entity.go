@@ -37,7 +37,7 @@ func NewEntityService() *EntityService {
 	msgChanMap := make(map[string]map[string]chan []byte)
 	client, err := core.NewCoreClient()
 	if err != nil {
-		log.Error(err)
+		log.Fatal(err)
 		return nil
 	}
 	return &EntityService{msgChanMap: msgChanMap, coreClient: *client}

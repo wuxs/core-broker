@@ -521,14 +521,15 @@ func (s *SubscribeService) ValidateSubscribed(ctx context.Context, req *pb.Valid
 	}
 
 	subscribe := model.Subscribe{Endpoint: req.Topic, UserID: authUser.ID}
-	validateSubscribeResult := model.DB().First(&subscribe)
-	if validateSubscribeResult.RowsAffected == 0 {
-		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user mismatch")
+	var find model.Subscribe
+	validateSubscribeResult := model.DB().Debug().Model(&subscribe).Select("id").Where(&subscribe).Find(&find)
+	if validateSubscribeResult.RowsAffected == 0 || validateSubscribeResult.Error != nil {
+		err = errors.New("subscribe and user mismatch")
 		log.Error("invalid error:", err)
 		return nil, err
 	}
 	resp := &pb.ValidateSubscribedResponse{Status: SuccessStatus}
-
+	log.Info("validate subscribe success", req)
 	return resp, nil
 }
 
@@ -545,10 +546,11 @@ func (s *SubscribeService) SubscribeByDevice(ctx context.Context, req *pb.Subscr
 		return nil, errors.New("invalid subscribe ids")
 	}
 
-	var count int
-	validateSubscribeResult := model.DB().Select("1").
+	var find []model.Subscribe
+	validateSubscribeResult := model.DB().Model(&model.Subscribe{}).
+		Select("id").
 		Where("id IN ?", req.SubscribeIds).
-		Where("user_id = ?", authUser).Find(&count)
+		Where("user_id = ?", authUser).Find(&find)
 	if validateSubscribeResult.RowsAffected != int64(len(req.SubscribeIds)) {
 		err = errors.Wrap(validateSubscribeResult.Error, "device and user mismatch")
 		log.Error("err:", err)

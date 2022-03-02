@@ -550,7 +550,7 @@ func (s *SubscribeService) SubscribeByDevice(ctx context.Context, req *pb.Subscr
 	validateSubscribeResult := model.DB().Model(&model.Subscribe{}).
 		Select("id").
 		Where("id IN ?", req.SubscribeIds).
-		Where("user_id = ?", authUser).Find(&find)
+		Where("user_id = ?", authUser.ID).Find(&find)
 	if validateSubscribeResult.RowsAffected != int64(len(req.SubscribeIds)) {
 		err = errors.Wrap(validateSubscribeResult.Error, "device and user mismatch")
 		log.Error("err:", err)

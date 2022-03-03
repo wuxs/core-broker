@@ -6,13 +6,14 @@ import (
 	"strings"
 )
 
-const defaultSeparator = ":"
+const defaultSeparator = "_"
 
 func GenerateSubscribeTopic(subscribeID uint, entityID string, opts ...Option) string {
 	separator := defaultSeparator
 	if len(opts) != 0 {
 		separator = opts[0]()
 	}
+
 	return fmt.Sprintf("%d%s%s", subscribeID, separator, entityID)
 }
 

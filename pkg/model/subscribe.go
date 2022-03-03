@@ -58,13 +58,14 @@ type SubscribeEntities struct {
 func (e *SubscribeEntities) AfterCreate(tx *gorm.DB) error {
 	tx.Model(&e.Subscribe).Where("id = ?", e.SubscribeID).First(&e.Subscribe)
 	log.Debug("creation of SubscribeEntities:", *e)
-	if err := createCoreSubscription(e.EntityID, e.UniqueKey); err != nil {
+	if err := createCoreSubscription(e.EntityID, e.Subscribe.Endpoint); err != nil {
 		err = errors.Wrap(err, "create core subscription err:")
 		log.Error(err)
 		return err
 	}
 	if err := updateEntitySubscribeEndpoint(e.EntityID,
-		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10), e.Subscribe.Endpoint}, "@"),
+		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10),
+			makeAMQPAddress(e.Subscribe.Endpoint)}, "@"),
 		add); err != nil {
 		err = errors.Wrap(err, "update entity subscribe endpoint err:")
 		log.Error(err)
@@ -73,15 +74,16 @@ func (e *SubscribeEntities) AfterCreate(tx *gorm.DB) error {
 	return nil
 }
 
-func (e *SubscribeEntities) AfterDelete(tx *gorm.DB) error {
+func (e *SubscribeEntities) BeforeDelete(tx *gorm.DB) error {
 	tx.Model(&e.Subscribe).Where("id = ?", e.SubscribeID).First(&e.Subscribe)
 	log.Debug("deleted of SubscribeEntities:", *e)
-	if err := deleteCoreSubscription(e.EntityID); err != nil {
+	if err := deleteCoreSubscription(e.EntityID, e.Subscribe.Endpoint); err != nil {
 		log.Error(err)
 		return err
 	}
 	if err := updateEntitySubscribeEndpoint(e.EntityID,
-		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10), e.Subscribe.Endpoint}, "@"),
+		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10),
+			makeAMQPAddress(e.Subscribe.Endpoint)}, "@"),
 		reduce); err != nil {
 		return err
 	}
@@ -92,8 +94,8 @@ func createCoreSubscription(entityID string, topic string) error {
 	return coreClient.Subscribe(entityID, topic)
 }
 
-func deleteCoreSubscription(entityID string) error {
-	return coreClient.UnSubscribe(entityID)
+func deleteCoreSubscription(entityID string, SubscribeID string) error {
+	return coreClient.UnSubscribe(entityID, SubscribeID)
 }
 
 type choice uint8
@@ -129,7 +131,11 @@ func updateEntitySubscribeEndpoint(entityID, endpoint string, c choice) error {
 				validAddresses = append(validAddresses, addrs[i])
 			}
 		}
-		subscribeAddr = strings.Join(validAddresses, separator)
+		if len(validAddresses) != 0 {
+			subscribeAddr = strings.Join(validAddresses, separator)
+		} else {
+			subscribeAddr = ""
+		}
 	}
 
 	patchData = append(patchData, map[string]interface{}{
@@ -137,6 +143,9 @@ func updateEntitySubscribeEndpoint(entityID, endpoint string, c choice) error {
 		"path":     "sysField._subscribeAddr",
 		"value":    subscribeAddr,
 	})
+
+	log.Debug("patchData:", patchData)
+
 	if err = coreClient.PatchEntity(entityID, patchData); err != nil {
 		err = errors.Wrap(err, "patch entity err:")
 		return err

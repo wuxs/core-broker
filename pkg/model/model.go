@@ -15,19 +15,29 @@ import (
 const (
 	// schema like: "user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
 	dsnFromOSEnvKey = "DSN"
+	amqpServer      = "AMQP_SERVER"
 )
 
 type WhereOptions func() (query interface{}, args interface{})
 
-var _once sync.Once
-var db *gorm.DB
-var coreClient *core.Client
+var (
+	_once      sync.Once
+	db         *gorm.DB
+	coreClient *core.Client
+
+	AMQPServerAddr = "amqp://localhost:3172"
+)
 
 func Setup() error {
 	var err error
 	coreClient, err = core.NewCoreClient()
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	amqpServerStr := os.Getenv(amqpServer)
+	if amqpServerStr != "" {
+		AMQPServerAddr = amqpServerStr
 	}
 
 	dsn := os.Getenv(dsnFromOSEnvKey)
@@ -37,6 +47,10 @@ func Setup() error {
 	}
 	db = connection
 	return db.AutoMigrate(&Subscribe{}, &SubscribeEntities{})
+}
+
+func makeAMQPAddress(endpoint string) string {
+	return AMQPServerAddr + "/" + endpoint
 }
 
 func DB() *gorm.DB {

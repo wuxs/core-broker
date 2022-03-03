@@ -55,6 +55,7 @@ func GenerateSubscribeEndpoint() string {
 	for b := range buf {
 		buf[b] = chars[buf[b]%uint8(len(chars))]
 	}
+	buf[0] = RandomWord()
 	return string(buf)
 }
 
@@ -65,6 +66,13 @@ func GenerateRandString(len int) string {
 		index := mathRand.New(source).Intn(len)
 		b[i] = chars[index]
 	}
-
+	b[0] = RandomWord()
 	return string(b)
+}
+
+func RandomWord() byte {
+	words := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	source := mathRand.NewSource(time.Now().UnixNano())
+	index := mathRand.New(source).Intn(len(words))
+	return words[index]
 }

@@ -1,12 +1,13 @@
 package model
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/tkeel-io/core-broker/pkg/util"
 	"github.com/tkeel-io/kit/log"
 	"gorm.io/gorm"
-	"strconv"
-	"strings"
 )
 
 var ErrUndeleteable = errors.New("undeleteable")
@@ -55,6 +56,7 @@ type SubscribeEntities struct {
 }
 
 func (e *SubscribeEntities) AfterCreate(tx *gorm.DB) error {
+	tx.Model(&e.Subscribe).Where("id = ?", e.SubscribeID).First(&e.Subscribe)
 	log.Debug("creation of SubscribeEntities:", *e)
 	if err := createCoreSubscription(e.EntityID, e.UniqueKey); err != nil {
 		err = errors.Wrap(err, "create core subscription err:")
@@ -72,6 +74,8 @@ func (e *SubscribeEntities) AfterCreate(tx *gorm.DB) error {
 }
 
 func (e *SubscribeEntities) AfterDelete(tx *gorm.DB) error {
+	tx.Model(&e.Subscribe).Where("id = ?", e.SubscribeID).First(&e.Subscribe)
+	log.Debug("deleted of SubscribeEntities:", *e)
 	if err := deleteCoreSubscription(e.EntityID); err != nil {
 		log.Error(err)
 		return err
@@ -103,7 +107,7 @@ func updateEntitySubscribeEndpoint(entityID, endpoint string, c choice) error {
 	separator := ","
 	patchData := make([]map[string]interface{}, 0)
 
-	device, err := coreClient.GetEntity(entityID)
+	device, err := coreClient.GetDeviceEntity(entityID)
 	if err != nil {
 		log.Error("get entity err:", err)
 		return err
@@ -111,7 +115,12 @@ func updateEntitySubscribeEndpoint(entityID, endpoint string, c choice) error {
 	subscribeAddr := endpoint
 	switch c {
 	case add:
-		subscribeAddr = strings.Join([]string{device.Properties.SysField.SubscribeAddr, endpoint}, separator)
+		if strings.Contains(device.Properties.SysField.SubscribeAddr, endpoint) {
+			return nil
+		}
+		if device.Properties.SysField.SubscribeAddr != "" {
+			subscribeAddr = strings.Join([]string{device.Properties.SysField.SubscribeAddr, endpoint}, separator)
+		}
 	case reduce:
 		addrs := strings.Split(device.Properties.SysField.SubscribeAddr, separator)
 		validAddresses := make([]string, 0, len(addrs))

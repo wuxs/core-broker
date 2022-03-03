@@ -29,9 +29,9 @@ func (c Client) PatchEntity(entityID string, data []map[string]interface{}) erro
 	return nil
 }
 
-func (c Client) GetEntity(entityID string) (*Entity, error) {
+func (c Client) GetDeviceEntity(entityID string) (*Entity, error) {
 	ctx := context.Background()
-	queryEntityURL := QueryEntityURL(entityID)
+	queryEntityURL := QueryDeviceEntityURL(entityID)
 
 	resp, err := c.daprClient.InvokeMethod(ctx, AppID, queryEntityURL, http.MethodGet)
 	if err != nil {
@@ -41,8 +41,12 @@ func (c Client) GetEntity(entityID string) (*Entity, error) {
 
 	response := &GetEntityResponse{}
 	if err = json.Unmarshal(resp, response); err != nil {
+		log.Errorf("unmarshal response content: %s \n err:%v", string(resp), err)
 		return nil, err
 	}
+
+	log.Debug("get entity response raw:", string(resp))
+	log.Debug("get entity:", response)
 
 	return &response.Data, nil
 }

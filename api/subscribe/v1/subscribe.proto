@@ -278,7 +278,7 @@ message UnsubscribeEntitiesByIDsRequest {
   uint64 id = 1
     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
   repeated string entities = 2
-    [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "订阅ID"}];
+    [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "取消订阅的设备ID们"}];
 }
 
 message UnsubscribeEntitiesByIDsResponse {

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 	pb "github.com/tkeel-io/core-broker/api/subscribe/v1"
@@ -243,6 +244,11 @@ func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.Li
 func (s *SubscribeService) CreateSubscribe(ctx context.Context, req *pb.CreateSubscribeRequest) (*pb.CreateSubscribeResponse, error) {
 	authUser, err := s.client.User(ctx)
 	if nil != err {
+		log.Error("err:", err)
+		return nil, err
+	}
+	if strings.Contains(req.Title, "@") {
+		err = errors.New("title can't contain @")
 		log.Error("err:", err)
 		return nil, err
 	}

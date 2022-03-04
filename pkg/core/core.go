@@ -38,8 +38,8 @@ func (c *Client) Subscribe(entityID string, topic string) error {
 
 	subscriptionID := types.GenerateSubscriptionID(entityID)
 	methodName := fmt.Sprintf("v1/subscriptions?id=%s&owner=admin&source=dm&type=SUBSCRIPTION", subscriptionID)
-	filter := buildSubscribeQuery(subscriptionID, entityID)
-	subscriptionData := SubscriptionData{
+	filter := buildSubscriptionIntoFilterQuery(subscriptionID, entityID)
+	subscriptionRequestData := SubscriptionData{
 		Mode:       "realtime",
 		Source:     "ignore",
 		Filter:     filter,
@@ -47,10 +47,10 @@ func (c *Client) Subscribe(entityID string, topic string) error {
 		PubsubName: types.PubsubName,
 	}
 	if topic != "" {
-		subscriptionID = topic
+		subscriptionID = genSubscriptionID(entityID, topic)
 		methodName = fmt.Sprintf("v1/subscriptions?id=%s&owner=admin&source=dm&type=SUBSCRIPTION", subscriptionID)
-		filter = buildSubscribeQuery(subscriptionID, entityID)
-		subscriptionData = SubscriptionData{
+		filter = buildSubscriptionIntoFilterQuery(subscriptionID, entityID)
+		subscriptionRequestData = SubscriptionData{
 			Mode:       "realtime",
 			Source:     "ignore",
 			Filter:     filter,
@@ -61,11 +61,11 @@ func (c *Client) Subscribe(entityID string, topic string) error {
 
 	log.Debug("subscription ID:", subscriptionID)
 	log.Debug("methodName:", methodName)
-	log.Debug("Subscribe to Core data: ", subscriptionData)
+	log.Debug("Subscribe to Core data: ", subscriptionRequestData)
 
-	contentData, err := json.Marshal(subscriptionData)
+	contentData, err := json.Marshal(subscriptionRequestData)
 	if err != nil {
-		return errors.Wrap(err, "subscriptionData marshal error")
+		return errors.Wrap(err, "subscriptionRequestData marshal error")
 	}
 
 	content := &dapr.DataContent{
@@ -81,13 +81,14 @@ func (c *Client) Subscribe(entityID string, topic string) error {
 	return nil
 }
 
-func (c *Client) UnSubscribe(entityID string, subscriptionId string) error {
+func (c *Client) Unsubscribe(entityID string, topic string) error {
 	ctx := context.Background()
 	subscriptionID := types.GenerateSubscriptionID(entityID)
-	if subscriptionId != "" {
-		subscriptionID = subscriptionId
+	if topic != "" {
+		subscriptionID = genSubscriptionID(entityID, topic)
 	}
 	methodName := fmt.Sprintf("v1/subscriptions/%s?owner=admin&source=dm&type=SUBSCRIPTION", subscriptionID)
+	log.Debug("invoke unsubscribe to Core: ", methodName)
 	if c, err := c.daprClient.InvokeMethod(ctx, AppID, methodName, http.MethodDelete); err != nil {
 		log.Error("invoke "+methodName, err)
 		log.Error("invoke Response:", string(c))
@@ -96,23 +97,16 @@ func (c *Client) UnSubscribe(entityID string, subscriptionId string) error {
 	return nil
 }
 
-const ql = "insert into %s select %s.*"
+const _InsertQueryTemplate = "insert into %s select %s.*"
 
-func buildSubscribeQuery(to string, from string) string {
-	return fmt.Sprintf(ql, to, from)
+func buildSubscriptionIntoFilterQuery(to string, from string) string {
+	return fmt.Sprintf(_InsertQueryTemplate, to, from)
 }
 
-func encodeSubscribeID(id uint) string {
+const prefix = "cb-"
+
+func genSubscriptionID(entityID, topic string) string {
 	h := md5.New()
-	h.Write([]byte(fmt.Sprintf("%d", id)))
-	return hex.EncodeToString(h.Sum(nil))
+	h.Write([]byte(entityID + topic))
+	return prefix + hex.EncodeToString(h.Sum(nil))
 }
-
-//func decodeSubscriptionIDToSubscribeID(id string) uint {
-//	data, err := base64.StdEncoding.DecodeString(id)
-//	if err != nil {
-//		return 0
-//	}
-//	t, _ := strconv.ParseUint(string(data), 10, 64)
-//	return uint(t)
-//}

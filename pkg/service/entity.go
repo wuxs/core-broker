@@ -76,8 +76,7 @@ func (s *EntityService) handleRequest(c *websocket.Conn, stopChan chan struct{},
 			if _, ok := s.msgChanMap[entityID]; ok {
 				delete(s.msgChanMap[entityID], clientID)
 				if len(s.msgChanMap[entityID]) == 0 {
-					s.coreClient.UnSubscribe(entityID, "")
-					types.DelSubscriptionID(entityID)
+					s.coreClient.Unsubscribe(entityID, "")
 					delete(s.msgChanMap, entityID)
 				}
 			}

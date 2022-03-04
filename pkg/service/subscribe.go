@@ -327,8 +327,12 @@ func (s *SubscribeService) DeleteSubscribe(ctx context.Context, req *pb.DeleteSu
 		log.Error("err:", err)
 		return nil, err
 	}
-	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
-	validateSubscribeResult := model.DB().Model(&subscribe).Where(&subscribe).First(&subscribe)
+	log.Debugf("user %s starting to delete subscribe %d", authUser.ID, req.Id)
+	subscribe := model.Subscribe{}
+	validateSubscribeResult := model.DB().Model(&subscribe).
+		Where("id = ?", req.Id).
+		Where("user_id = ?", authUser.ID).
+		First(&subscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
 		log.Error("err:", err)

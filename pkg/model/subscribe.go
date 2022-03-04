@@ -89,14 +89,14 @@ func (e *SubscribeEntities) BeforeDelete(tx *gorm.DB) error {
 		return nil
 	}
 	log.Debug("deleted of SubscribeEntities:", *e)
-	if err := deleteCoreSubscription(e.EntityID, e.Subscribe.Endpoint); err != nil {
-		log.Error(err)
-		return err
-	}
 	if err := updateEntitySubscribeEndpoint(e.EntityID,
 		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10),
 			makeAMQPAddress(e.Subscribe.Endpoint)}, "@"),
 		reduce); err != nil {
+		return err
+	}
+	if err := deleteCoreSubscription(e.EntityID, e.Subscribe.Endpoint); err != nil {
+		log.Error(err)
 		return err
 	}
 	return nil

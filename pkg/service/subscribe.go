@@ -170,12 +170,13 @@ func (s *SubscribeService) UnsubscribeEntitiesByIDs(ctx context.Context, req *pb
 	tx := model.DB().Begin()
 	for _, entityID := range req.Entities {
 		subscribeEntity := model.SubscribeEntities{
-			Subscribe: subscribe,
-			EntityID:  entityID,
-			UniqueKey: subscribeuril.GenerateSubscribeTopic(subscribe.ID, entityID),
+			Subscribe:   subscribe,
+			EntityID:    entityID,
+			SubscribeID: subscribe.ID,
+			UniqueKey:   subscribeuril.GenerateSubscribeTopic(subscribe.ID, entityID),
 		}
 		result := tx.
-			Where("subscribe_id = ?", subscribeEntity.Subscribe.ID).
+			Where("subscribe_id = ?", subscribeEntity.SubscribeID).
 			Where("entity_id = ?", subscribeEntity.EntityID).
 			Where("unique_key = ?", subscribeEntity.UniqueKey).
 			Delete(&subscribeEntity)

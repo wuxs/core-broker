@@ -56,6 +56,15 @@ type SubscribeEntities struct {
 }
 
 func (e *SubscribeEntities) AfterCreate(tx *gorm.DB) error {
+	if e.UniqueKey == "" {
+		return errors.New("UniqueKey is empty")
+	}
+	if e.SubscribeID == 0 {
+		return errors.New("subscribeID id is empty")
+	}
+	if e.EntityID == "" {
+		return errors.New("entityID is empty")
+	}
 	tx.Model(&e.Subscribe).Where("id = ?", e.SubscribeID).First(&e.Subscribe)
 	log.Debug("creation of SubscribeEntities:", *e)
 	if err := createCoreSubscription(e.EntityID, e.Subscribe.Endpoint); err != nil {
@@ -113,6 +122,7 @@ func updateEntitySubscribeEndpoint(entityID, endpoint string, c choice) error {
 	patchData := make([]map[string]interface{}, 0)
 
 	device, err := coreClient.GetDeviceEntity(entityID)
+	log.Debug("get device entity:", device)
 	if err != nil {
 		log.Error("get entity err:", err)
 		return err
@@ -131,6 +141,7 @@ func updateEntitySubscribeEndpoint(entityID, endpoint string, c choice) error {
 		validAddresses := make([]string, 0, len(addrs))
 		for i := range addrs {
 			if addrs[i] != endpoint {
+				log.Debugf("addrs[i]: %v, endpoint: %v", addrs[i], endpoint)
 				validAddresses = append(validAddresses, addrs[i])
 			}
 		}
@@ -139,6 +150,7 @@ func updateEntitySubscribeEndpoint(entityID, endpoint string, c choice) error {
 		} else {
 			subscribeAddr = ""
 		}
+		log.Debugf("generated subscribeAddr: %s", subscribeAddr)
 	}
 
 	patchData = append(patchData, map[string]interface{}{

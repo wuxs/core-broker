@@ -75,10 +75,10 @@ func (s *EntityService) handleRequest(c *websocket.Conn, stopChan chan struct{},
 		if err != nil {
 			if _, ok := s.msgChanMap[entityID]; ok {
 				delete(s.msgChanMap[entityID], clientID)
-				//				if len(s.msgChanMap[entityID]) == 0 {
-				//					s.coreClient.Unsubscribe(entityID, "")
-				//					delete(s.msgChanMap, entityID)
-				//				}
+				if len(s.msgChanMap[entityID]) == 0 {
+					s.coreClient.Unsubscribe(entityID, "")
+					delete(s.msgChanMap, entityID)
+				}
 			}
 			close(stopChan)
 			return

@@ -1,7 +1,9 @@
 package model
 
 import (
+	"fmt"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/tkeel-io/core-broker/pkg/core"
@@ -41,6 +43,28 @@ func Setup() error {
 	}
 
 	dsn := os.Getenv(dsnFromOSEnvKey)
+	slashIndex := strings.LastIndex(dsn, "/")
+	_dsn := dsn[:slashIndex+1]
+	items := strings.Split(dsn[slashIndex+1:], "?")
+	dbName := items[0]
+	fmt.Println(_dsn)
+	fmt.Println(dbName)
+	_dsn = fmt.Sprintf("%s?%s", _dsn, items[1])
+	db, err := gorm.Open(mysql.Open(_dsn), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	createSQL := fmt.Sprintf(
+		"CREATE DATABASE IF NOT EXISTS `%s` CHARACTER SET utf8mb4;",
+		dbName,
+	)
+
+	err = db.Exec(createSQL).Error
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	connection, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err)

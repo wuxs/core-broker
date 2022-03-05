@@ -74,7 +74,7 @@ func (e *SubscribeEntities) AfterCreate(tx *gorm.DB) error {
 	}
 	if err := updateEntitySubscribeEndpoint(e.EntityID,
 		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10),
-			makeAMQPAddress(e.Subscribe.Endpoint)}, "@"),
+			MakeAMQPAddress(e.Subscribe.Endpoint)}, "@"),
 		add); err != nil {
 		err = errors.Wrap(err, "update entity subscribe endpoint err")
 		log.Error(err)
@@ -91,7 +91,7 @@ func (e *SubscribeEntities) BeforeDelete(tx *gorm.DB) error {
 	log.Debug("deleted of SubscribeEntities:", *e)
 	if err := updateEntitySubscribeEndpoint(e.EntityID,
 		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10),
-			makeAMQPAddress(e.Subscribe.Endpoint)}, "@"),
+			MakeAMQPAddress(e.Subscribe.Endpoint)}, "@"),
 		reduce); err != nil {
 		return err
 	}

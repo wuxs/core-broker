@@ -6,11 +6,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	dapr "github.com/dapr/go-sdk/client"
 	"github.com/pkg/errors"
 	types "github.com/tkeel-io/core-broker/pkg/types"
 	"github.com/tkeel-io/kit/log"
-	"net/http"
 )
 
 type Client struct {
@@ -76,7 +77,7 @@ func (c *Client) Subscribe(entityID string, topic string) error {
 	if c, err := c.daprClient.InvokeMethodWithContent(ctx, AppID, methodName, http.MethodPost, content); err != nil {
 		log.Error("invoke "+methodName, err)
 		log.Error("invoke Response:", string(c))
-		return errors.Wrap(err, "invoke method error")
+		//		return errors.Wrap(err, "invoke method error")
 	}
 	return nil
 }

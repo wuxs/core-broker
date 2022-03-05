@@ -1,8 +1,9 @@
 # tkeel core-broker
 
-这是一个封装了对 Core 基础功能，从而实现一些需要复杂操作从而满足用户需求的一个代理服务。目前提供了：Websocket 服务、 Subscribe 服务。供平台侧使用。
+这是一个对 Core 基础功能封装，从而实现一些需要复杂操作从而满足用户需求的一个代理服务。目前提供了：对设备提供 Websocket 服务、 Subscribe 服务。供平台侧使用。
 
 ## 依赖
+首先，该服务为 tKeel 下的一个插件
 - 集群模式下的 tKeel 平台
 - 一个 MySQL 服务
 - tKeel Core 服务

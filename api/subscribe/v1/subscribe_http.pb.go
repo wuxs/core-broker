@@ -34,11 +34,13 @@ type SubscribeHTTPServer interface {
 	GetSubscribe(context.Context, *GetSubscribeRequest) (*GetSubscribeResponse, error)
 	ListSubscribe(context.Context, *ListSubscribeRequest) (*ListSubscribeResponse, error)
 	ListSubscribeEntities(context.Context, *ListSubscribeEntitiesRequest) (*ListSubscribeEntitiesResponse, error)
+	SubscribeByDevice(context.Context, *SubscribeByDeviceRequest) (*SubscribeByDeviceResponse, error)
 	SubscribeEntitiesByGroups(context.Context, *SubscribeEntitiesByGroupsRequest) (*SubscribeEntitiesByGroupsResponse, error)
 	SubscribeEntitiesByIDs(context.Context, *SubscribeEntitiesByIDsRequest) (*SubscribeEntitiesByIDsResponse, error)
 	SubscribeEntitiesByModels(context.Context, *SubscribeEntitiesByModelsRequest) (*SubscribeEntitiesByModelsResponse, error)
 	UnsubscribeEntitiesByIDs(context.Context, *UnsubscribeEntitiesByIDsRequest) (*UnsubscribeEntitiesByIDsResponse, error)
 	UpdateSubscribe(context.Context, *UpdateSubscribeRequest) (*UpdateSubscribeResponse, error)
+	ValidateSubscribed(context.Context, *ValidateSubscribedRequest) (*ValidateSubscribedResponse, error)
 }
 
 type SubscribeHTTPHandler struct {
@@ -387,6 +389,64 @@ func (h *SubscribeHTTPHandler) ListSubscribeEntities(req *go_restful.Request, re
 	}
 }
 
+func (h *SubscribeHTTPHandler) SubscribeByDevice(req *go_restful.Request, resp *go_restful.Response) {
+	in := SubscribeByDeviceRequest{}
+	if err := transportHTTP.GetBody(req, &in); err != nil {
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(errors.InternalError.Reason, err.Error(), nil), "application/json")
+		return
+	}
+	if err := transportHTTP.GetPathValue(req, &in); err != nil {
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(errors.InternalError.Reason, err.Error(), nil), "application/json")
+		return
+	}
+
+	ctx := transportHTTP.ContextWithHeader(req.Request.Context(), req.Request.Header)
+
+	out, err := h.srv.SubscribeByDevice(ctx, &in)
+	if err != nil {
+		tErr := errors.FromError(err)
+		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
+		resp.WriteHeaderAndJson(httpCode,
+			result.Set(tErr.Reason, tErr.Message, out), "application/json")
+		return
+	}
+	anyOut, err := anypb.New(out)
+	if err != nil {
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(errors.InternalError.Reason, err.Error(), nil), "application/json")
+		return
+	}
+
+	outB, err := protojson.MarshalOptions{
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
+	}.Marshal(&result.Http{
+		Code: errors.Success.Reason,
+		Msg:  "",
+		Data: anyOut,
+	})
+	if err != nil {
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(errors.InternalError.Reason, err.Error(), nil), "application/json")
+		return
+	}
+	resp.AddHeader(go_restful.HEADER_ContentType, "application/json")
+
+	var remain int
+	for {
+		outB = outB[remain:]
+		remain, err = resp.Write(outB)
+		if err != nil {
+			return
+		}
+		if remain == 0 {
+			break
+		}
+	}
+}
+
 func (h *SubscribeHTTPHandler) SubscribeEntitiesByGroups(req *go_restful.Request, resp *go_restful.Response) {
 	in := SubscribeEntitiesByGroupsRequest{}
 	if err := transportHTTP.GetBody(req, &in); err != nil {
@@ -677,6 +737,59 @@ func (h *SubscribeHTTPHandler) UpdateSubscribe(req *go_restful.Request, resp *go
 	}
 }
 
+func (h *SubscribeHTTPHandler) ValidateSubscribed(req *go_restful.Request, resp *go_restful.Response) {
+	in := ValidateSubscribedRequest{}
+	if err := transportHTTP.GetBody(req, &in); err != nil {
+		resp.WriteHeaderAndJson(http.StatusBadRequest,
+			result.Set(errors.InternalError.Reason, err.Error(), nil), "application/json")
+		return
+	}
+
+	ctx := transportHTTP.ContextWithHeader(req.Request.Context(), req.Request.Header)
+
+	out, err := h.srv.ValidateSubscribed(ctx, &in)
+	if err != nil {
+		tErr := errors.FromError(err)
+		httpCode := errors.GRPCToHTTPStatusCode(tErr.GRPCStatus().Code())
+		resp.WriteHeaderAndJson(httpCode,
+			result.Set(tErr.Reason, tErr.Message, out), "application/json")
+		return
+	}
+	anyOut, err := anypb.New(out)
+	if err != nil {
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(errors.InternalError.Reason, err.Error(), nil), "application/json")
+		return
+	}
+
+	outB, err := protojson.MarshalOptions{
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
+	}.Marshal(&result.Http{
+		Code: errors.Success.Reason,
+		Msg:  "",
+		Data: anyOut,
+	})
+	if err != nil {
+		resp.WriteHeaderAndJson(http.StatusInternalServerError,
+			result.Set(errors.InternalError.Reason, err.Error(), nil), "application/json")
+		return
+	}
+	resp.AddHeader(go_restful.HEADER_ContentType, "application/json")
+
+	var remain int
+	for {
+		outB = outB[remain:]
+		remain, err = resp.Write(outB)
+		if err != nil {
+			return
+		}
+		if remain == 0 {
+			break
+		}
+	}
+}
+
 func RegisterSubscribeHTTPServer(container *go_restful.Container, srv SubscribeHTTPServer) {
 	var ws *go_restful.WebService
 	for _, v := range container.RegisteredWebServices() {
@@ -715,4 +828,8 @@ func RegisterSubscribeHTTPServer(container *go_restful.Container, srv SubscribeH
 		To(handler.ListSubscribe))
 	ws.Route(ws.PUT("/subscribe/{id}").
 		To(handler.ChangeSubscribed))
+	ws.Route(ws.POST("/validate/subscribe").
+		To(handler.ValidateSubscribed))
+	ws.Route(ws.POST("/subscribe/device/{id}").
+		To(handler.SubscribeByDevice))
 }

@@ -49,7 +49,7 @@ func (s *OpenapiService) Identify(ctx context.Context, in *emptypb.Empty) (*open
 	return &openapi_v1.IdentifyResponse{
 		Res:          util.OKResult(),
 		PluginId:     "core-broker",
-		Version:      "0.4.0-alpha.2",
+		Version:      "0.4.1",
 		TkeelVersion: "v0.4.0",
 	}, nil
 }

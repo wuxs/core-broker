@@ -2,10 +2,10 @@ package service
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 	pb "github.com/tkeel-io/core-broker/api/subscribe/v1"
-	"github.com/tkeel-io/core-broker/pkg/core"
 	"github.com/tkeel-io/core-broker/pkg/deviceutil"
 	"github.com/tkeel-io/core-broker/pkg/model"
 	"github.com/tkeel-io/core-broker/pkg/pagination"
@@ -26,11 +26,7 @@ type SubscribeService struct {
 }
 
 func NewSubscribeService() *SubscribeService {
-	coreClient, err := core.NewCoreClient()
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err = model.Setup(coreClient); err != nil {
+	if err := model.Setup(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -102,7 +98,7 @@ func (s *SubscribeService) SubscribeEntitiesByGroups(ctx context.Context, req *p
 	}
 	records := s.createSubscribeEntitiesRecords(ids, &subscribe)
 	log.Info("create subscribe entities records:", records)
-	result := model.DB().Preload("Subscribes").Create(&records)
+	result := model.DB().Create(&records)
 	if result.Error != nil {
 		log.Error("err:", result.Error)
 		return nil, result.Error
@@ -141,7 +137,7 @@ func (s *SubscribeService) SubscribeEntitiesByModels(ctx context.Context, req *p
 		return nil, errors.New("no device found")
 	}
 	records := s.createSubscribeEntitiesRecords(ids, &subscribe)
-	result := model.DB().Preload("Subscribe").Create(&records)
+	result := model.DB().Create(&records)
 	if result.Error != nil {
 		log.Error("err:", result.Error)
 		return nil, result.Error
@@ -174,12 +170,13 @@ func (s *SubscribeService) UnsubscribeEntitiesByIDs(ctx context.Context, req *pb
 	tx := model.DB().Begin()
 	for _, entityID := range req.Entities {
 		subscribeEntity := model.SubscribeEntities{
-			Subscribe: subscribe,
-			EntityID:  entityID,
-			UniqueKey: subscribeuril.GenerateSubscribeTopic(subscribe.ID, entityID),
+			Subscribe:   subscribe,
+			EntityID:    entityID,
+			SubscribeID: subscribe.ID,
+			UniqueKey:   subscribeuril.GenerateSubscribeTopic(subscribe.ID, entityID),
 		}
 		result := tx.
-			Where("subscribe_id = ?", subscribeEntity.Subscribe.ID).
+			Where("subscribe_id = ?", subscribeEntity.SubscribeID).
 			Where("entity_id = ?", subscribeEntity.EntityID).
 			Where("unique_key = ?", subscribeEntity.UniqueKey).
 			Delete(&subscribeEntity)
@@ -248,6 +245,11 @@ func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.Li
 func (s *SubscribeService) CreateSubscribe(ctx context.Context, req *pb.CreateSubscribeRequest) (*pb.CreateSubscribeResponse, error) {
 	authUser, err := s.client.User(ctx)
 	if nil != err {
+		log.Error("err:", err)
+		return nil, err
+	}
+	if strings.Contains(req.Title, "@") {
+		err = errors.New("title can't contain @")
 		log.Error("err:", err)
 		return nil, err
 	}
@@ -326,8 +328,12 @@ func (s *SubscribeService) DeleteSubscribe(ctx context.Context, req *pb.DeleteSu
 		log.Error("err:", err)
 		return nil, err
 	}
-	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
-	validateSubscribeResult := model.DB().Model(&subscribe).Where(&subscribe).First(&subscribe)
+	log.Debugf("user %s starting to delete subscribe %d", authUser.ID, req.Id)
+	subscribe := model.Subscribe{}
+	validateSubscribeResult := model.DB().Model(&subscribe).
+		Where("id = ?", req.Id).
+		Where("user_id = ?", authUser.ID).
+		First(&subscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
 		log.Error("err:", err)
@@ -364,7 +370,7 @@ func (s *SubscribeService) GetSubscribe(ctx context.Context, req *pb.GetSubscrib
 		Id:          uint64(subscribe.ID),
 		Title:       subscribe.Title,
 		Description: subscribe.Description,
-		Endpoint:    subscribe.Endpoint,
+		Endpoint:    model.MakeAMQPAddress(subscribe.Endpoint),
 		Count:       uint64(count),
 		CreatedAt:   subscribe.CreatedAt.Unix(),
 		UpdatedAt:   subscribe.UpdatedAt.Unix(),
@@ -397,6 +403,38 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 		return nil, result.Error
 	}
 
+	data := make([]*pb.SubscribeObject, 0, len(subscribes))
+	for i := range subscribes {
+		data = append(data, &pb.SubscribeObject{
+			Id:          uint64(subscribes[i].ID),
+			Title:       subscribes[i].Title,
+			Description: subscribes[i].Description,
+			Endpoint:    model.MakeAMQPAddress(subscribes[i].Endpoint),
+			IsDefault:   subscribes[i].IsDefault,
+		})
+	}
+
+	resp := &pb.ListSubscribeResponse{}
+	// for template create default subscribe
+	if len(subscribes) == 0 {
+		createRequest := &pb.CreateSubscribeRequest{
+			Title:       "Default Title",
+			Description: "This is default subscribe.",
+		}
+		subscribeResponse, err := s.CreateSubscribe(ctx, createRequest)
+		if err != nil {
+			log.Error("create default subscribe failed:", err)
+			return nil, err
+		}
+		data = append(data, &pb.SubscribeObject{
+			Id:          subscribeResponse.Id,
+			Title:       subscribeResponse.Title,
+			Description: subscribeResponse.Description,
+			Endpoint:    subscribeResponse.Endpoint,
+			IsDefault:   subscribeResponse.IsDefault,
+		})
+	}
+
 	var count int64
 	if err = model.Count(&count, &subscribeCondition, &subscribeCondition).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -406,28 +444,17 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 		count = 0
 	}
 	page.SetTotal(uint(count))
-	resp := &pb.ListSubscribeResponse{}
 	if err = page.FillResponse(resp); err != nil {
 		log.Error("err:", err)
 		return nil, err
 	}
 
-	data := make([]*pb.SubscribeObject, 0, len(subscribes))
-	for i := range subscribes {
-		data = append(data, &pb.SubscribeObject{
-			Id:          uint64(subscribes[i].ID),
-			Title:       subscribes[i].Title,
-			Description: subscribes[i].Description,
-			Endpoint:    subscribes[i].Endpoint,
-			IsDefault:   subscribes[i].IsDefault,
-		})
-	}
 	resp.Data = data
 
 	return resp, nil
 }
 
-func (s SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeSubscribedRequest) (*pb.ChangeSubscribedResponse, error) {
+func (s *SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeSubscribedRequest) (*pb.ChangeSubscribedResponse, error) {
 	authUser, err := s.client.User(ctx)
 	if nil != err {
 		log.Error("err:", err)
@@ -491,6 +518,69 @@ func (s SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeSu
 		resp.Status = ErrPartialFailure
 	}
 
+	return resp, nil
+}
+
+func (s *SubscribeService) ValidateSubscribed(ctx context.Context, req *pb.ValidateSubscribedRequest) (*pb.ValidateSubscribedResponse, error) {
+	authUser, err := s.client.User(ctx)
+	if nil != err {
+		log.Error("err:", err)
+		return nil, err
+	}
+	if req.Topic == "" {
+		return nil, errors.New("topic is empty")
+	}
+
+	subscribe := model.Subscribe{Endpoint: req.Topic, UserID: authUser.ID}
+	var find model.Subscribe
+	validateSubscribeResult := model.DB().Debug().Model(&subscribe).Select("id").Where(&subscribe).Find(&find)
+	if validateSubscribeResult.RowsAffected == 0 || validateSubscribeResult.Error != nil {
+		err = errors.New("subscribe and user mismatch")
+		log.Error("invalid error:", err)
+		return nil, err
+	}
+	resp := &pb.ValidateSubscribedResponse{Status: SuccessStatus}
+	log.Info("validate subscribe success", req)
+	return resp, nil
+}
+
+func (s *SubscribeService) SubscribeByDevice(ctx context.Context, req *pb.SubscribeByDeviceRequest) (*pb.SubscribeByDeviceResponse, error) {
+	authUser, err := s.client.User(ctx)
+	if nil != err {
+		log.Error("err:", err)
+		return nil, err
+	}
+	if req.Id == "" {
+		return nil, errors.New("invalid device id")
+	}
+	if req.SubscribeIds == nil || len(req.SubscribeIds) == 0 {
+		return nil, errors.New("invalid subscribe ids")
+	}
+
+	var find []model.Subscribe
+	validateSubscribeResult := model.DB().Model(&model.Subscribe{}).
+		Select("id").
+		Where("id IN ?", req.SubscribeIds).
+		Where("user_id = ?", authUser.ID).Find(&find)
+	if validateSubscribeResult.RowsAffected != int64(len(req.SubscribeIds)) {
+		err = errors.Wrap(validateSubscribeResult.Error, "device and user mismatch")
+		log.Error("err:", err)
+		return nil, err
+	}
+	subscribeEntities := make([]model.SubscribeEntities, len(req.SubscribeIds))
+	for i := range req.SubscribeIds {
+		subscribeEntities[i] = model.SubscribeEntities{
+			SubscribeID: uint(req.SubscribeIds[i]),
+			EntityID:    req.Id,
+			UniqueKey:   subscribeuril.GenerateSubscribeTopic(uint(req.SubscribeIds[i]), req.Id),
+		}
+	}
+	if err = model.DB().Debug().Create(&subscribeEntities).Error; err != nil {
+		log.Error("create err:", err)
+		return nil, err
+	}
+
+	resp := &pb.SubscribeByDeviceResponse{Status: SuccessStatus}
 	return resp, nil
 }
 

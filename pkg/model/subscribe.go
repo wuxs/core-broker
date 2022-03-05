@@ -1,6 +1,9 @@
 package model
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/tkeel-io/core-broker/pkg/util"
 	"github.com/tkeel-io/kit/log"
@@ -25,39 +28,75 @@ func (s *Subscribe) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-func (s Subscribe) AfterDelete(tx *gorm.DB) error {
+func (s *Subscribe) BeforeDelete(tx *gorm.DB) error {
 	if s.IsDefault {
 		return NewUndeleteable("this is default subscribe")
 	}
-	destroyEndpoint(s.Endpoint)
-	destroyRelevant(s.ID)
+	destroyEndpoint(tx, s.Endpoint)
+	destroyRelevant(tx, s.ID)
 	return nil
 }
 
-func destroyEndpoint(endpoint string) {
+func destroyEndpoint(tx *gorm.DB, endpoint string) {
 	// TODO: destroy endpoint
-	log.Debug("endpoint: %s", endpoint)
+	log.Debug("destroy endpoint: %s", endpoint)
 }
 
-func destroyRelevant(id uint) {
-	DB().Delete(SubscribeEntities{}, "subscribe_id = ?", id)
-	log.Debug("destroyRelevant")
+func destroyRelevant(tx *gorm.DB, id uint) {
+	tx.Delete(&SubscribeEntities{}, "subscribe_id = ?", id)
+	log.Debugf("destroy Relevant subscribe id: %d", id)
 }
 
 type SubscribeEntities struct {
-	EntityID    string `gorm:"index,not null"`
-	UniqueKey   string `gorm:"index, unique,size:255"`
-	SubscribeID uint   `gorm:"index,not null"`
+	EntityID    string `gorm:"index;not null"`
+	UniqueKey   string `gorm:"index;unique;size:255"`
+	SubscribeID uint   `gorm:"index;not null"`
 
 	Subscribe Subscribe
 }
 
 func (e *SubscribeEntities) AfterCreate(tx *gorm.DB) error {
-	if err := createCoreSubscription(e.EntityID, e.UniqueKey); err != nil {
+	if e.UniqueKey == "" {
+		return errors.New("UniqueKey is empty")
+	}
+	if e.SubscribeID == 0 {
+		return errors.New("subscribeID id is empty")
+	}
+	if e.EntityID == "" {
+		return errors.New("entityID is empty")
+	}
+	tx.Model(&e.Subscribe).Where("id = ?", e.SubscribeID).First(&e.Subscribe)
+	log.Debug("creation of SubscribeEntities:", *e)
+	if err := createCoreSubscription(e.EntityID, e.Subscribe.Endpoint); err != nil {
+		err = errors.Wrap(err, "create core subscription err")
 		log.Error(err)
 		return err
 	}
-	if err := updateEntitySubscribeEndpoint(e.EntityID, e.Subscribe.Endpoint); err != nil {
+	if err := updateEntitySubscribeEndpoint(e.EntityID,
+		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10),
+			MakeAMQPAddress(e.Subscribe.Endpoint)}, "@"),
+		add); err != nil {
+		err = errors.Wrap(err, "update entity subscribe endpoint err")
+		log.Error(err)
+		return err
+	}
+	return nil
+}
+
+func (e *SubscribeEntities) BeforeDelete(tx *gorm.DB) error {
+	// this condition will skip by destroyRelevant() function
+	if e.EntityID == "" && e.Subscribe.Endpoint == "" {
+		return nil
+	}
+	log.Debug("deleted of SubscribeEntities:", *e)
+	if err := updateEntitySubscribeEndpoint(e.EntityID,
+		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10),
+			MakeAMQPAddress(e.Subscribe.Endpoint)}, "@"),
+		reduce); err != nil {
+		return err
+	}
+	if err := deleteCoreSubscription(e.EntityID, e.Subscribe.Endpoint); err != nil {
+		log.Error(err)
 		return err
 	}
 	return nil
@@ -67,14 +106,68 @@ func createCoreSubscription(entityID string, topic string) error {
 	return coreClient.Subscribe(entityID, topic)
 }
 
-func updateEntitySubscribeEndpoint(entityID, endpoint string) error {
+func deleteCoreSubscription(entityID string, topic string) error {
+	return coreClient.Unsubscribe(entityID, topic)
+}
+
+type choice uint8
+
+const (
+	add choice = iota + 1
+	reduce
+)
+
+func updateEntitySubscribeEndpoint(entityID, endpoint string, c choice) error {
+	separator := ","
 	patchData := make([]map[string]interface{}, 0)
+
+	device, err := coreClient.GetDeviceEntity(entityID)
+	log.Debug("get device entity:", device)
+	if err != nil {
+		log.Error("get entity err:", err)
+		return err
+	}
+	subscribeAddr := endpoint
+	switch c {
+	case add:
+		if strings.Contains(device.Properties.SysField.SubscribeAddr, endpoint) {
+			return nil
+		}
+		if device.Properties.SysField.SubscribeAddr != "" {
+			subscribeAddr = strings.Join([]string{device.Properties.SysField.SubscribeAddr, endpoint}, separator)
+		}
+	case reduce:
+		addrs := strings.Split(device.Properties.SysField.SubscribeAddr, separator)
+		validAddresses := make([]string, 0, len(addrs))
+		for i := range addrs {
+			if addrs[i] != endpoint {
+				log.Debugf("addrs[i]: %v, endpoint: %v", addrs[i], endpoint)
+				validAddresses = append(validAddresses, addrs[i])
+			}
+		}
+		if len(validAddresses) != 0 {
+			subscribeAddr = strings.Join(validAddresses, separator)
+		} else {
+			subscribeAddr = ""
+		}
+		log.Debugf("generated subscribeAddr: %s", subscribeAddr)
+	}
+
 	patchData = append(patchData, map[string]interface{}{
 		"operator": "replace",
 		"path":     "sysField._subscribeAddr",
-		"value":    endpoint,
+		"value":    subscribeAddr,
 	})
-	return coreClient.PatchEntity(entityID, patchData)
+
+	log.Debug("patchData:", patchData)
+	log.Debug("call patch on choice (add 1, reduce 2):", c)
+
+	if err = coreClient.PatchEntity(entityID, patchData); err != nil {
+		err = errors.Wrap(err, "patch entity err")
+		return err
+	}
+
+	return nil
 }
 
 func NewUndeleteable(content string) error {

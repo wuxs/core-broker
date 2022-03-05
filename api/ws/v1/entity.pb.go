@@ -137,8 +137,8 @@ var file_api_ws_v1_entity_proto_goTypes = []interface{}{
 	(*GetEntityResponse)(nil), // 1: api.ws.v1.GetEntityResponse
 }
 var file_api_ws_v1_entity_proto_depIdxs = []int32{
-	0, // 0: api.ws.v1.Entity.GetEntity:input_type -> api.ws.v1.GetEntityRequest
-	1, // 1: api.ws.v1.Entity.GetEntity:output_type -> api.ws.v1.GetEntityResponse
+	0, // 0: api.ws.v1.Entity.GetDeviceEntity:input_type -> api.ws.v1.GetEntityRequest
+	1, // 1: api.ws.v1.Entity.GetDeviceEntity:output_type -> api.ws.v1.GetEntityResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

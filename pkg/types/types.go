@@ -17,13 +17,9 @@ limitations under the License.
 package types
 
 import (
+	pb "github.com/tkeel-io/core-broker/api/topic/v1"
 	"os"
 	"strings"
-	"sync"
-
-	"github.com/tkeel-io/core-broker/pkg/util"
-
-	pb "github.com/tkeel-io/core-broker/api/topic/v1"
 )
 
 var MsgChan = make(chan *pb.TopicEventRequest, 100)
@@ -38,8 +34,6 @@ func Interface2string(in interface{}) (out string) {
 	return
 }
 
-var entityMap sync.Map
-
 type WsRequest struct {
 	Type string `json:"type,omitempty"`
 	ID   string `json:"id,omitempty"`
@@ -51,20 +45,9 @@ const PubsubName = "core-broker-pubsub"
 var Topic, _ = os.Hostname()
 
 func GenerateSubscriptionID(entityID string) string {
-	subID, ok := entityMap.Load(entityID)
-	if ok {
-		return subID.(string)
-	} else {
-		subID := entityID + "_" + Topic + util.GenerateRandString(10)
-		entityMap.Store(entityID, subID)
-		return subID
-	}
+	return entityID + "_" + Topic
 }
 
 func GetEntityID(subscriptionID string) string {
 	return strings.Split(subscriptionID, "_")[0]
-}
-
-func DelSubscriptionID(entityID string) {
-	entityMap.Delete(entityID)
 }

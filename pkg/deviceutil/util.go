@@ -24,7 +24,7 @@ type ListEntity struct {
 	Items    []Object
 	PageSize int32
 	PageNum  int32
-	Total    string
+	Total    int32
 }
 
 type Object struct {

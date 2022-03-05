@@ -2,16 +2,16 @@ package core
 
 import (
 	"context"
-	"encoding/base64"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/tkeel-io/core-broker/pkg/subscribeuril"
 	"net/http"
-	"strconv"
 
 	dapr "github.com/dapr/go-sdk/client"
 	"github.com/pkg/errors"
 	types "github.com/tkeel-io/core-broker/pkg/types"
+	"github.com/tkeel-io/kit/log"
 )
 
 type Client struct {
@@ -39,8 +39,8 @@ func (c *Client) Subscribe(entityID string, topic string) error {
 
 	subscriptionID := types.GenerateSubscriptionID(entityID)
 	methodName := fmt.Sprintf("v1/subscriptions?id=%s&owner=admin&source=dm&type=SUBSCRIPTION", subscriptionID)
-	filter := buildSubscribeQuery(subscriptionID, entityID)
-	subscriptionData := SubscriptionData{
+	filter := buildSubscriptionIntoFilterQuery(subscriptionID, entityID)
+	subscriptionRequestData := SubscriptionData{
 		Mode:       "realtime",
 		Source:     "ignore",
 		Filter:     filter,
@@ -48,10 +48,10 @@ func (c *Client) Subscribe(entityID string, topic string) error {
 		PubsubName: types.PubsubName,
 	}
 	if topic != "" {
-		subscriptionID = encodeSubscribeID(subscribeuril.GetSubscribeID(topic))
+		subscriptionID = genSubscriptionID(entityID, topic)
 		methodName = fmt.Sprintf("v1/subscriptions?id=%s&owner=admin&source=dm&type=SUBSCRIPTION", subscriptionID)
-		filter = buildSubscribeQuery(subscriptionID, entityID)
-		subscriptionData = SubscriptionData{
+		filter = buildSubscriptionIntoFilterQuery(subscriptionID, entityID)
+		subscriptionRequestData = SubscriptionData{
 			Mode:       "realtime",
 			Source:     "ignore",
 			Filter:     filter,
@@ -60,42 +60,54 @@ func (c *Client) Subscribe(entityID string, topic string) error {
 		}
 	}
 
-	contentData, err := json.Marshal(subscriptionData)
+	log.Debug("subscription ID:", subscriptionID)
+	log.Debug("methodName:", methodName)
+	log.Debug("Subscribe to Core data: ", subscriptionRequestData)
+
+	contentData, err := json.Marshal(subscriptionRequestData)
 	if err != nil {
-		return errors.Wrap(err, "subscriptionData marshal error")
+		return errors.Wrap(err, "subscriptionRequestData marshal error")
 	}
 
 	content := &dapr.DataContent{
 		Data:        contentData,
 		ContentType: MimeJson,
 	}
-	c.daprClient.InvokeMethodWithContent(ctx, AppID, methodName, http.MethodPost, content)
+
+	if c, err := c.daprClient.InvokeMethodWithContent(ctx, AppID, methodName, http.MethodPost, content); err != nil {
+		log.Error("invoke "+methodName, err)
+		log.Error("invoke Response:", string(c))
+		//		return errors.Wrap(err, "invoke method error")
+	}
 	return nil
 }
 
-func (c *Client) UnSubscribe(entityID string) error {
+func (c *Client) Unsubscribe(entityID string, topic string) error {
 	ctx := context.Background()
 	subscriptionID := types.GenerateSubscriptionID(entityID)
+	if topic != "" {
+		subscriptionID = genSubscriptionID(entityID, topic)
+	}
 	methodName := fmt.Sprintf("v1/subscriptions/%s?owner=admin&source=dm&type=SUBSCRIPTION", subscriptionID)
-	c.daprClient.InvokeMethod(ctx, AppID, methodName, http.MethodDelete)
+	log.Debug("invoke unsubscribe to Core: ", methodName)
+	if c, err := c.daprClient.InvokeMethod(ctx, AppID, methodName, http.MethodDelete); err != nil {
+		log.Error("invoke "+methodName, err)
+		log.Error("invoke Response:", string(c))
+		return err
+	}
 	return nil
 }
 
-const ql = "insert into %s select %s.*"
+const _InsertQueryTemplate = "insert into %s select %s.*"
 
-func buildSubscribeQuery(to string, from string) string {
-	return fmt.Sprintf(ql, to, from)
+func buildSubscriptionIntoFilterQuery(to string, from string) string {
+	return fmt.Sprintf(_InsertQueryTemplate, to, from)
 }
 
-func encodeSubscribeID(id uint) string {
-	return base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%d", id)))
-}
+const prefix = "cb-"
 
-func decodeSubscriptionIDToSubscribeID(id string) uint {
-	data, err := base64.StdEncoding.DecodeString(id)
-	if err != nil {
-		return 0
-	}
-	t, _ := strconv.ParseUint(string(data), 10, 64)
-	return uint(t)
+func genSubscriptionID(entityID, topic string) string {
+	h := md5.New()
+	h.Write([]byte(entityID + topic))
+	return prefix + hex.EncodeToString(h.Sum(nil))
 }

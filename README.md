@@ -1,34 +1,25 @@
-# tkeel-plugin-template-go
+# tkeel core-broker
 
-This is a template we have given for Go language developers to quickly build a plugin application.
+这是一个对 Core 基础功能封装，从而实现一些需要复杂操作从而满足用户需求的一个代理服务。目前提供了：对设备提供 Websocket 服务、 Subscribe 服务。供平台侧使用。
 
-## Usage
-We have a development tool that will automatically download this template for you: [artisan](https://github.com/tkeel-io/tkeel-interface/tree/main/tool ).
+## 依赖
+首先，该服务为 tKeel 下的一个插件
+- 集群模式下的 tKeel 平台
+- 一个 MySQL 服务
+- tKeel Core 服务
+- tKeel Device 服务
+- dapr 边车模式开启 core-broker 服务
 
-According to the _**artisan**_ documentation, you can find the `Quick Start' document, which describes how to use this template.
+## 环境配置
+以下是该服务用到的环境变量：
+```bash
+// 该变量用于指定数据订阅生成的 amqp 服务地址指向
+export AMQP_SERVER=amqp://tkeel.io:5672
 
-1. Use the _**artisan**_ to quickly generate the **proto** you need in the `api` directory and define the structures you need in it.
-2. Automatic generation of the transport layer source files required for the service via **proto** files
-3. Use the _**artisan**_ to generate the **service** files into `/pkg/service` and then write your own business logic in them.
-4. Adding your services to the server in `cmd/your/main.go`.
-5. Run your server
-
-## About
-We have a copy of our discussion process and results on why this template is styled the way it is here :
-[About The Project Layout](https://github.com/tkeel-io/tkeel/issues/17 )
-[Layout of PKG Directory](https://github.com/tkeel-io/tkeel/issues/39 ).
-
-## 🔥 Light up
-
-If you have any suggestions or ideas, you are welcome to file an [Issue](https://github.com/tkeel-io/entity-broker/issues ) at any time, we'll look forward to sharing them together to make the world a better place.
-
-**Thank you very much** for your `feedback` and `suggestions`!
-
-### 🌟 Find Us
-
-You may have many questions, and we will ensure that they are answered as soon as possible!
-
-| Social Platforms | Links |
-|:---|----|
-|email| tkeel@yunify.com|
-|Weibo| [@tkeel]()|
+// 用于定义该服务连接的 MySQL 配置 DSN
+export DSN=user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local
+```
+## Build 
+```bash
+make build
+```

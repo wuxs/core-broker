@@ -47,10 +47,8 @@ func Setup() error {
 	_dsn := dsn[:slashIndex+1]
 	items := strings.Split(dsn[slashIndex+1:], "?")
 	dbName := items[0]
-	fmt.Println(_dsn)
-	fmt.Println(dbName)
 	_dsn = fmt.Sprintf("%s?%s", _dsn, items[1])
-	db, err := gorm.Open(mysql.Open(_dsn), nil)
+	dbInit, err := gorm.Open(mysql.Open(_dsn), nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -60,7 +58,7 @@ func Setup() error {
 		dbName,
 	)
 
-	err = db.Exec(createSQL).Error
+	err = dbInit.Exec(createSQL).Error
 	if err != nil {
 		log.Fatal(err)
 	}

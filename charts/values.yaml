@@ -2,19 +2,20 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-replicaCount: 2
+replicaCount: 1
 
 image:
   repository: tkeelio/core-broker
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "v0.3.0"
+  tag: "0.4.1"
 
 nameOverride: "core-broker"
 fullnameOverride: "core-broker"
 
 daprConfig: core-broker
 appPort: 31234
+amqpPort: 5672
 middleware:
   name: tkeel-middleware
 
@@ -43,3 +44,10 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+mysql:
+  fullnameOverride: tkeel-core-broker-mysql
+  auth:
+    rootPassword: a3fks=ixmeb82a
+    database: core_broker
+

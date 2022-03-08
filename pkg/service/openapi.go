@@ -47,10 +47,11 @@ func (s *OpenapiService) AddonsIdentify(ctx context.Context, in *openapi_v1.Addo
 // Identify implements Identify.OpenapiServer.
 func (s *OpenapiService) Identify(ctx context.Context, in *emptypb.Empty) (*openapi_v1.IdentifyResponse, error) {
 	return &openapi_v1.IdentifyResponse{
-		Res:          util.OKResult(),
-		PluginId:     "core-broker",
-		Version:      "0.4.0-alpha.2",
-		TkeelVersion: "v0.4.0",
+		Res:                     util.OKResult(),
+		PluginId:                "core-broker",
+		Version:                 "0.4.1",
+		TkeelVersion:            "v0.4.0",
+		DisableManualActivation: true,
 	}, nil
 }
 

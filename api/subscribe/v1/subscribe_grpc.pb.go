@@ -29,6 +29,8 @@ type SubscribeClient interface {
 	GetSubscribe(ctx context.Context, in *GetSubscribeRequest, opts ...grpc.CallOption) (*GetSubscribeResponse, error)
 	ListSubscribe(ctx context.Context, in *ListSubscribeRequest, opts ...grpc.CallOption) (*ListSubscribeResponse, error)
 	ChangeSubscribed(ctx context.Context, in *ChangeSubscribedRequest, opts ...grpc.CallOption) (*ChangeSubscribedResponse, error)
+	ValidateSubscribed(ctx context.Context, in *ValidateSubscribedRequest, opts ...grpc.CallOption) (*ValidateSubscribedResponse, error)
+	SubscribeByDevice(ctx context.Context, in *SubscribeByDeviceRequest, opts ...grpc.CallOption) (*SubscribeByDeviceResponse, error)
 }
 
 type subscribeClient struct {
@@ -138,6 +140,24 @@ func (c *subscribeClient) ChangeSubscribed(ctx context.Context, in *ChangeSubscr
 	return out, nil
 }
 
+func (c *subscribeClient) ValidateSubscribed(ctx context.Context, in *ValidateSubscribedRequest, opts ...grpc.CallOption) (*ValidateSubscribedResponse, error) {
+	out := new(ValidateSubscribedResponse)
+	err := c.cc.Invoke(ctx, "/api.subscribe.v1.Subscribe/ValidateSubscribed", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *subscribeClient) SubscribeByDevice(ctx context.Context, in *SubscribeByDeviceRequest, opts ...grpc.CallOption) (*SubscribeByDeviceResponse, error) {
+	out := new(SubscribeByDeviceResponse)
+	err := c.cc.Invoke(ctx, "/api.subscribe.v1.Subscribe/SubscribeByDevice", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SubscribeServer is the server API for Subscribe service.
 // All implementations must embed UnimplementedSubscribeServer
 // for forward compatibility
@@ -153,6 +173,8 @@ type SubscribeServer interface {
 	GetSubscribe(context.Context, *GetSubscribeRequest) (*GetSubscribeResponse, error)
 	ListSubscribe(context.Context, *ListSubscribeRequest) (*ListSubscribeResponse, error)
 	ChangeSubscribed(context.Context, *ChangeSubscribedRequest) (*ChangeSubscribedResponse, error)
+	ValidateSubscribed(context.Context, *ValidateSubscribedRequest) (*ValidateSubscribedResponse, error)
+	SubscribeByDevice(context.Context, *SubscribeByDeviceRequest) (*SubscribeByDeviceResponse, error)
 	mustEmbedUnimplementedSubscribeServer()
 }
 
@@ -192,6 +214,12 @@ func (UnimplementedSubscribeServer) ListSubscribe(context.Context, *ListSubscrib
 }
 func (UnimplementedSubscribeServer) ChangeSubscribed(context.Context, *ChangeSubscribedRequest) (*ChangeSubscribedResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangeSubscribed not implemented")
+}
+func (UnimplementedSubscribeServer) ValidateSubscribed(context.Context, *ValidateSubscribedRequest) (*ValidateSubscribedResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidateSubscribed not implemented")
+}
+func (UnimplementedSubscribeServer) SubscribeByDevice(context.Context, *SubscribeByDeviceRequest) (*SubscribeByDeviceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SubscribeByDevice not implemented")
 }
 func (UnimplementedSubscribeServer) mustEmbedUnimplementedSubscribeServer() {}
 
@@ -404,6 +432,42 @@ func _Subscribe_ChangeSubscribed_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Subscribe_ValidateSubscribed_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidateSubscribedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubscribeServer).ValidateSubscribed(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.subscribe.v1.Subscribe/ValidateSubscribed",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubscribeServer).ValidateSubscribed(ctx, req.(*ValidateSubscribedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Subscribe_SubscribeByDevice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubscribeByDeviceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubscribeServer).SubscribeByDevice(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.subscribe.v1.Subscribe/SubscribeByDevice",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubscribeServer).SubscribeByDevice(ctx, req.(*SubscribeByDeviceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Subscribe_ServiceDesc is the grpc.ServiceDesc for Subscribe service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -454,6 +518,14 @@ var Subscribe_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ChangeSubscribed",
 			Handler:    _Subscribe_ChangeSubscribed_Handler,
+		},
+		{
+			MethodName: "ValidateSubscribed",
+			Handler:    _Subscribe_ValidateSubscribed_Handler,
+		},
+		{
+			MethodName: "SubscribeByDevice",
+			Handler:    _Subscribe_SubscribeByDevice_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

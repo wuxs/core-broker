@@ -1065,10 +1065,10 @@ github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhV
 github.com/tidwall/pretty v1.1.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tidwall/pretty v1.2.0/go.mod h1:ITEVvHYasfjBbM0u2Pg8T2nJnzm8xPwvNhhsoaGGjNU=
 github.com/tjfoc/gmsm v1.3.2/go.mod h1:HaUcFuY0auTiaHB9MHFGCPx5IaLhTUd2atbCFBQXn9w=
-github.com/tkeel-io/kit v0.0.0-20220214021338-d36b084b71ae h1:tnnp5eUyrL1zXGfTdbX0aKTGuSvJwJz2u4++E9hsxGc=
-github.com/tkeel-io/kit v0.0.0-20220214021338-d36b084b71ae/go.mod h1:FYeTM+tqf/tdrf2HxUX2wdAAHQM8ggN4+IbZv4b6+wU=
-github.com/tkeel-io/tkeel-interface/openapi v0.0.0-20220215024719-5296e91b6ff3 h1:tCYrR5n8WZwnc+1dnxHcI7O660Y9IcgSm1Ukt57PbZs=
-github.com/tkeel-io/tkeel-interface/openapi v0.0.0-20220215024719-5296e91b6ff3/go.mod h1:tjJgHPar2pFjydhnOCLspww8tSOvcKch241PeP9OL8E=
+github.com/tkeel-io/kit v0.0.0-20220303080455-8ab38f419f7c h1:9N3MBvT0WDaHSu9cIz3O8UEboqYMfEmNUc+COvdoFJU=
+github.com/tkeel-io/kit v0.0.0-20220303080455-8ab38f419f7c/go.mod h1:ki+q/zN0N2eSfjUnpkx8g3UlVps5waO2bkiIvO85ZCg=
+github.com/tkeel-io/tkeel-interface/openapi v0.0.0-20220303151503-0f9a4a00fd77 h1:odBS2F8zlZTMgDdEsItP5/qWGzO2EMWUku72fTsUsTE=
+github.com/tkeel-io/tkeel-interface/openapi v0.0.0-20220303151503-0f9a4a00fd77/go.mod h1:tjJgHPar2pFjydhnOCLspww8tSOvcKch241PeP9OL8E=
 github.com/tklauser/go-sysconf v0.3.6/go.mod h1:MkWzOF4RMCshBAMXuhXJs64Rte09mITnppBXY/rYEFI=
 github.com/tklauser/numcpus v0.2.2/go.mod h1:x3qojaO3uyYt0i56EW/VUYs7uBvdl2fkfZFu0T9wgjM=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
@@ -1617,8 +1617,8 @@ google.golang.org/genproto v0.0.0-20210707164411-8c882eb9abba/go.mod h1:AxrInvYm
 google.golang.org/genproto v0.0.0-20210831024726-fe130286e0e2/go.mod h1:eFjDcFEctNawg4eG61bRv87N7iHBWyVhJu7u1kqDUXY=
 google.golang.org/genproto v0.0.0-20211104193956-4c6863e31247/go.mod h1:5CzLGKJ67TSI2B9POpiiyGha0AjJvZIUgRMt1dSmuhc=
 google.golang.org/genproto v0.0.0-20211118181313-81c1377c94b1/go.mod h1:5CzLGKJ67TSI2B9POpiiyGha0AjJvZIUgRMt1dSmuhc=
-google.golang.org/genproto v0.0.0-20220211171837-173942840c17 h1:2X+CNIheCutWRyKRte8szGxrE5ggtV4U+NKAbh/oLhg=
-google.golang.org/genproto v0.0.0-20220211171837-173942840c17/go.mod h1:kGP+zUP2Ddo0ayMi4YuN7C3WZyJvGLZRh8Z5wnAqvEI=
+google.golang.org/genproto v0.0.0-20220304144024-325a89244dc8 h1:U9V52f6rAgINH7kT+musA1qF8kWyVOxzF8eYuOVuFwQ=
+google.golang.org/genproto v0.0.0-20220304144024-325a89244dc8/go.mod h1:kGP+zUP2Ddo0ayMi4YuN7C3WZyJvGLZRh8Z5wnAqvEI=
 google.golang.org/grpc v1.17.0/go.mod h1:6QZJwpn2B+Zp71q/5VxRsJ6NXXVCE5NRUHRo+f3cWCs=
 google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZiDr8c=
 google.golang.org/grpc v1.20.0/go.mod h1:chYK+tFQF0nDUGJgXMSgLCQk3phJEuONr2DCgLDdAQM=

@@ -31,7 +31,7 @@ func NewEntityClient(cc grpc.ClientConnInterface) EntityClient {
 
 func (c *entityClient) GetEntity(ctx context.Context, in *GetEntityRequest, opts ...grpc.CallOption) (*GetEntityResponse, error) {
 	out := new(GetEntityResponse)
-	err := c.cc.Invoke(ctx, "/api.ws.v1.Entity/GetEntity", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.ws.v1.Entity/GetDeviceEntity", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ type UnimplementedEntityServer struct {
 }
 
 func (UnimplementedEntityServer) GetEntity(context.Context, *GetEntityRequest) (*GetEntityResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetEntity not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method GetDeviceEntity not implemented")
 }
 func (UnimplementedEntityServer) mustEmbedUnimplementedEntityServer() {}
 
@@ -76,7 +76,7 @@ func _Entity_GetEntity_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.ws.v1.Entity/GetEntity",
+		FullMethod: "/api.ws.v1.Entity/GetDeviceEntity",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(EntityServer).GetEntity(ctx, req.(*GetEntityRequest))
@@ -92,7 +92,7 @@ var Entity_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*EntityServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetEntity",
+			MethodName: "GetDeviceEntity",
 			Handler:    _Entity_GetEntity_Handler,
 		},
 	},

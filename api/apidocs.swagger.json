@@ -49,6 +49,56 @@
         ]
       }
     },
+    "/subscribe/device/{id}": {
+      "post": {
+        "summary": "subscribe by device",
+        "operationId": "SubscribeByDevice",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1SubscribeByDeviceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "device id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "subscribe_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uint64"
+                  },
+                  "description": "subscribe ids"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      }
+    },
     "/subscribe/list": {
       "post": {
         "summary": "get subscribe list",
@@ -526,6 +576,39 @@
           "subscribe"
         ]
       }
+    },
+    "/validate/subscribe": {
+      "post": {
+        "summary": "validate subscribe topic is user request",
+        "operationId": "ValidateSubscribed",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/v1ValidateSubscribedResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ValidateSubscribedRequest"
+            }
+          }
+        ],
+        "tags": [
+          "subscribe"
+        ]
+      }
     }
   },
   "definitions": {
@@ -825,6 +908,15 @@
         "page_size"
       ]
     },
+    "v1SubscribeByDeviceResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "status"
+        }
+      }
+    },
     "v1SubscribeEntitiesByGroupsResponse": {
       "type": "object",
       "properties": {
@@ -930,6 +1022,24 @@
         "is_default": {
           "type": "boolean",
           "description": "是否为默认订阅"
+        }
+      }
+    },
+    "v1ValidateSubscribedRequest": {
+      "type": "object",
+      "properties": {
+        "topic": {
+          "type": "string",
+          "description": "topic"
+        }
+      }
+    },
+    "v1ValidateSubscribedResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "status"
         }
       }
     }

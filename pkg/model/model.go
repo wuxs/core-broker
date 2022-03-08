@@ -1,10 +1,12 @@
 package model
 
 import (
+	"fmt"
 	"os"
+	"strings"
 	"sync"
 
-	corelib "github.com/tkeel-io/core-broker/pkg/core"
+	"github.com/tkeel-io/core-broker/pkg/core"
 	"github.com/tkeel-io/core-broker/pkg/pagination"
 	"github.com/tkeel-io/kit/log"
 
@@ -15,26 +17,62 @@ import (
 const (
 	// schema like: "user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
 	dsnFromOSEnvKey = "DSN"
+	amqpServer      = "AMQP_SERVER"
 )
 
 type WhereOptions func() (query interface{}, args interface{})
 
-var _once sync.Once
-var db *gorm.DB
-var coreClient *corelib.Client
+var (
+	_once      sync.Once
+	db         *gorm.DB
+	coreClient *core.Client
 
-func Setup(coreClients ...*corelib.Client) error {
-	if len(coreClients) > 0 {
-		coreClient = coreClients[0]
+	AMQPServerAddr = "amqp://localhost:3172"
+)
+
+func Setup() error {
+	var err error
+	coreClient, err = core.NewCoreClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	amqpServerStr := os.Getenv(amqpServer)
+	if amqpServerStr != "" {
+		AMQPServerAddr = amqpServerStr
 	}
 
 	dsn := os.Getenv(dsnFromOSEnvKey)
+	slashIndex := strings.LastIndex(dsn, "/")
+	_dsn := dsn[:slashIndex+1]
+	items := strings.Split(dsn[slashIndex+1:], "?")
+	dbName := items[0]
+	_dsn = fmt.Sprintf("%s?%s", _dsn, items[1])
+	dbInit, err := gorm.Open(mysql.Open(_dsn), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	createSQL := fmt.Sprintf(
+		"CREATE DATABASE IF NOT EXISTS `%s` CHARACTER SET utf8mb4;",
+		dbName,
+	)
+
+	err = dbInit.Exec(createSQL).Error
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	connection, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 	db = connection
 	return db.AutoMigrate(&Subscribe{}, &SubscribeEntities{})
+}
+
+func MakeAMQPAddress(endpoint string) string {
+	return AMQPServerAddr + "/" + endpoint
 }
 
 func DB() *gorm.DB {

@@ -28,6 +28,22 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
+        - name: amqp
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: tkeelio/amqp:0.4.1
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: amqp
+              containerPort: 5672
+              protocol: TCP
+          env:
+            - name: KEEL_PRIVATE_STORE
+              value: {{ printf "%s-redis-private-store" .Values.middleware.name }}
+            - name: KEEL_PUBLIC_STORE
+              value: {{ printf "%s-redis-public-store" .Values.middleware.name }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
@@ -42,6 +58,10 @@ spec:
               value: {{ printf "%s-redis-private-store" .Values.middleware.name }}
             - name: KEEL_PUBLIC_STORE
               value: {{ printf "%s-redis-public-store" .Values.middleware.name }}
+            - name: DSN
+              value: "root:a3fks=ixmeb82a@tcp(tkeel-core-broker-mysql:3306)/core_broker?charset=utf8mb4&parseTime=True&loc=Local"
+            - name: AMQP_SERVER
+              value: amqp://tkeel.io:30082
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

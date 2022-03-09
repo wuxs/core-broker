@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/tkeel-io/core-broker/pkg/auth"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -22,7 +23,6 @@ const (
 
 type SubscribeService struct {
 	pb.UnimplementedSubscribeServer
-	client *CoreClient
 }
 
 func NewSubscribeService() *SubscribeService {
@@ -30,12 +30,11 @@ func NewSubscribeService() *SubscribeService {
 		log.Fatal(err)
 	}
 
-	return &SubscribeService{client: NewCoreClient()}
+	return &SubscribeService{}
 }
 
 func (s *SubscribeService) SubscribeEntitiesByIDs(ctx context.Context, req *pb.SubscribeEntitiesByIDsRequest) (*pb.SubscribeEntitiesByIDsResponse, error) {
-	// verify Authentication in header and get user token map.
-	authUser, err := s.client.User(ctx)
+	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
@@ -70,7 +69,7 @@ func (s *SubscribeService) SubscribeEntitiesByIDs(ctx context.Context, req *pb.S
 }
 
 func (s *SubscribeService) SubscribeEntitiesByGroups(ctx context.Context, req *pb.SubscribeEntitiesByGroupsRequest) (*pb.SubscribeEntitiesByGroupsResponse, error) {
-	authUser, err := s.client.User(ctx)
+	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
@@ -110,7 +109,7 @@ func (s *SubscribeService) SubscribeEntitiesByGroups(ctx context.Context, req *p
 }
 
 func (s *SubscribeService) SubscribeEntitiesByModels(ctx context.Context, req *pb.SubscribeEntitiesByModelsRequest) (*pb.SubscribeEntitiesByModelsResponse, error) {
-	authUser, err := s.client.User(ctx)
+	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
@@ -149,8 +148,7 @@ func (s *SubscribeService) SubscribeEntitiesByModels(ctx context.Context, req *p
 }
 
 func (s *SubscribeService) UnsubscribeEntitiesByIDs(ctx context.Context, req *pb.UnsubscribeEntitiesByIDsRequest) (*pb.UnsubscribeEntitiesByIDsResponse, error) {
-	// verify Authentication in header and get user token map.
-	authUser, err := s.client.User(ctx)
+	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
@@ -192,7 +190,7 @@ func (s *SubscribeService) UnsubscribeEntitiesByIDs(ctx context.Context, req *pb
 }
 
 func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.ListSubscribeEntitiesRequest) (*pb.ListSubscribeEntitiesResponse, error) {
-	authUser, err := s.client.User(ctx)
+	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
@@ -243,13 +241,14 @@ func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.Li
 }
 
 func (s *SubscribeService) CreateSubscribe(ctx context.Context, req *pb.CreateSubscribeRequest) (*pb.CreateSubscribeResponse, error) {
-	authUser, err := s.client.User(ctx)
+	authUser, err := auth.GetUser(ctx)
 	if nil != err {
-		log.Error("err:", err)
+		log.Error("get auth user err:", err)
 		return nil, err
 	}
-	if strings.Contains(req.Title, "@") {
-		err = errors.New("title can't contain @")
+	if strings.Contains(req.Title, "@") ||
+		strings.Contains(req.Title, ",") {
+		err = errors.New("title contain illegal characters")
 		log.Error("err:", err)
 		return nil, err
 	}
@@ -287,7 +286,7 @@ func (s *SubscribeService) CreateSubscribe(ctx context.Context, req *pb.CreateSu
 }
 
 func (s *SubscribeService) UpdateSubscribe(ctx context.Context, req *pb.UpdateSubscribeRequest) (*pb.UpdateSubscribeResponse, error) {
-	authUser, err := s.client.User(ctx)
+	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
@@ -323,7 +322,7 @@ func (s *SubscribeService) UpdateSubscribe(ctx context.Context, req *pb.UpdateSu
 }
 
 func (s *SubscribeService) DeleteSubscribe(ctx context.Context, req *pb.DeleteSubscribeRequest) (*pb.DeleteSubscribeResponse, error) {
-	authUser, err := s.client.User(ctx)
+	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
@@ -350,7 +349,7 @@ func (s *SubscribeService) DeleteSubscribe(ctx context.Context, req *pb.DeleteSu
 }
 
 func (s *SubscribeService) GetSubscribe(ctx context.Context, req *pb.GetSubscribeRequest) (*pb.GetSubscribeResponse, error) {
-	authUser, err := s.client.User(ctx)
+	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
@@ -380,7 +379,7 @@ func (s *SubscribeService) GetSubscribe(ctx context.Context, req *pb.GetSubscrib
 }
 
 func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscribeRequest) (*pb.ListSubscribeResponse, error) {
-	authUser, err := s.client.User(ctx)
+	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
@@ -455,7 +454,7 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 }
 
 func (s *SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeSubscribedRequest) (*pb.ChangeSubscribedResponse, error) {
-	authUser, err := s.client.User(ctx)
+	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
@@ -522,7 +521,7 @@ func (s *SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeS
 }
 
 func (s *SubscribeService) ValidateSubscribed(ctx context.Context, req *pb.ValidateSubscribedRequest) (*pb.ValidateSubscribedResponse, error) {
-	authUser, err := s.client.User(ctx)
+	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err
@@ -545,7 +544,7 @@ func (s *SubscribeService) ValidateSubscribed(ctx context.Context, req *pb.Valid
 }
 
 func (s *SubscribeService) SubscribeByDevice(ctx context.Context, req *pb.SubscribeByDeviceRequest) (*pb.SubscribeByDeviceResponse, error) {
-	authUser, err := s.client.User(ctx)
+	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
 		return nil, err

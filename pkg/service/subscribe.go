@@ -24,6 +24,10 @@ const (
 	_DefaultSubscribeDescription = "这是我的默认订阅，该订阅无法被删除，但是可以被修改。"
 )
 
+var (
+	ErrDeviceNotFound = errors.New("device not found")
+)
+
 type SubscribeService struct {
 	pb.UnimplementedSubscribeServer
 }
@@ -40,14 +44,14 @@ func (s *SubscribeService) SubscribeEntitiesByIDs(ctx context.Context, req *pb.S
 	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
 	validateSubscribeResult := model.DB().First(&subscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 
 	resp := &pb.SubscribeEntitiesByIDsResponse{
@@ -62,7 +66,7 @@ func (s *SubscribeService) SubscribeEntitiesByIDs(ctx context.Context, req *pb.S
 	result := model.DB().Preload("Subscribe").Create(&records)
 	if result.Error != nil {
 		log.Error("err:", result.Error)
-		return nil, result.Error
+		return nil, pb.ErrInternalError()
 	}
 	if result.RowsAffected != int64(len(records)) {
 		resp.Status = RepeatedInsertionStatus
@@ -75,14 +79,14 @@ func (s *SubscribeService) SubscribeEntitiesByGroups(ctx context.Context, req *p
 	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
 	validateSubscribeResult := model.DB().First(&subscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 
 	resp := &pb.SubscribeEntitiesByGroupsResponse{
@@ -93,17 +97,19 @@ func (s *SubscribeService) SubscribeEntitiesByGroups(ctx context.Context, req *p
 	if err != nil {
 		err = errors.Wrap(err, "get device entities IDs from groups IDs error")
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrInternalQuery()
 	}
+	log.Debug("get device entities IDs from groups IDs:", ids)
 	if len(ids) == 0 {
-		return nil, errors.New("no device found")
+		log.Debug("no device entities IDs found")
+		return nil, pb.ErrDeviceNotFound()
 	}
 	records := s.createSubscribeEntitiesRecords(ids, &subscribe)
 	log.Info("create subscribe entities records:", records)
 	result := model.DB().Create(&records)
 	if result.Error != nil {
 		log.Error("err:", result.Error)
-		return nil, result.Error
+		return nil, pb.ErrInternalError()
 	}
 	if result.RowsAffected != int64(len(records)) {
 		resp.Status = RepeatedInsertionStatus
@@ -115,14 +121,14 @@ func (s *SubscribeService) SubscribeEntitiesByModels(ctx context.Context, req *p
 	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
 	validateSubscribeResult := model.DB().First(&subscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 
 	resp := &pb.SubscribeEntitiesByModelsResponse{
@@ -135,14 +141,16 @@ func (s *SubscribeService) SubscribeEntitiesByModels(ctx context.Context, req *p
 		log.Error("err:", err)
 		return nil, err
 	}
+	log.Debug("get device entities IDs from groups IDs:", ids)
 	if len(ids) == 0 {
-		return nil, errors.New("no device found")
+		log.Debug("no device entities IDs found")
+		return nil, pb.ErrDeviceNotFound()
 	}
 	records := s.createSubscribeEntitiesRecords(ids, &subscribe)
 	result := model.DB().Create(&records)
 	if result.Error != nil {
 		log.Error("err:", result.Error)
-		return nil, result.Error
+		return nil, pb.ErrInternalError()
 	}
 	if result.RowsAffected != int64(len(records)) {
 		resp.Status = RepeatedInsertionStatus
@@ -154,13 +162,13 @@ func (s *SubscribeService) UnsubscribeEntitiesByIDs(ctx context.Context, req *pb
 	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
 	if model.DB().First(&subscribe).RowsAffected == 0 {
 		err = errors.New("subscribe and user ID mismatch")
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 
 	resp := &pb.UnsubscribeEntitiesByIDsResponse{
@@ -184,7 +192,7 @@ func (s *SubscribeService) UnsubscribeEntitiesByIDs(ctx context.Context, req *pb
 		if result.Error != nil {
 			log.Error("err:", result.Error)
 			tx.Rollback()
-			return nil, result.Error
+			return nil, pb.ErrInternalError()
 		}
 	}
 	tx.Commit()
@@ -196,27 +204,27 @@ func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.Li
 	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
 	validateSubscribeResult := model.DB().First(&subscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 
 	page, err := pagination.Parse(req)
 	if err != nil {
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrInvalidArgument()
 	}
 
 	var records []model.SubscribeEntities
 	result := model.Paginate(&records, page, model.SubscribeEntities{SubscribeID: subscribe.ID})
 	if result.Error != nil {
 		log.Error("err:", result.Error)
-		return nil, err
+		return nil, pb.ErrList()
 	}
 
 	resp := &pb.ListSubscribeEntitiesResponse{}
@@ -224,7 +232,7 @@ func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.Li
 	err = page.FillResponse(resp)
 	if err != nil {
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrList()
 	}
 
 	entitiesIDs := make([]string, 0, len(records))
@@ -235,7 +243,10 @@ func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.Li
 	data, err := s.deviceEntities(entitiesIDs, authUser.Token)
 	if err != nil {
 		log.Error("err:", err)
-		return nil, err
+		if errors.Is(err, ErrDeviceNotFound) {
+			return nil, pb.ErrDeviceNotFound()
+		}
+		return nil, pb.ErrInternalQuery()
 	}
 
 	resp.Data = data
@@ -247,13 +258,13 @@ func (s *SubscribeService) CreateSubscribe(ctx context.Context, req *pb.CreateSu
 	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("get auth user err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 	if strings.Contains(req.Title, "@") ||
 		strings.Contains(req.Title, ",") {
 		err = errors.New("title contain illegal characters")
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 	sub := model.Subscribe{
 		UserID:      authUser.ID,
@@ -276,7 +287,7 @@ func (s *SubscribeService) CreateSubscribe(ctx context.Context, req *pb.CreateSu
 
 	if err = model.DB().Create(&sub).Error; err != nil {
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrInternalError()
 	}
 
 	return &pb.CreateSubscribeResponse{
@@ -292,14 +303,14 @@ func (s *SubscribeService) UpdateSubscribe(ctx context.Context, req *pb.UpdateSu
 	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
 	validateSubscribeResult := model.DB().First(&subscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 
 	if req.Title != "" {
@@ -311,7 +322,7 @@ func (s *SubscribeService) UpdateSubscribe(ctx context.Context, req *pb.UpdateSu
 	if err = model.DB().Save(&subscribe).Error; err != nil {
 		err = errors.Wrap(err, "update subscribe info err")
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrInternalError()
 	}
 
 	resp := &pb.UpdateSubscribeResponse{
@@ -328,7 +339,7 @@ func (s *SubscribeService) DeleteSubscribe(ctx context.Context, req *pb.DeleteSu
 	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 	log.Debugf("user %s starting to delete subscribe %d", authUser.ID, req.Id)
 	subscribe := model.Subscribe{}
@@ -339,13 +350,13 @@ func (s *SubscribeService) DeleteSubscribe(ctx context.Context, req *pb.DeleteSu
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 
 	if err = model.DB().Delete(&subscribe).Error; err != nil {
 		err = errors.Wrap(err, "delete subscribe err")
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrInternalError()
 	}
 
 	return &pb.DeleteSubscribeResponse{Id: req.Id}, nil
@@ -355,14 +366,14 @@ func (s *SubscribeService) GetSubscribe(ctx context.Context, req *pb.GetSubscrib
 	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
 	validateSubscribeResult := model.DB().First(&subscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 
 	var count int64
@@ -385,12 +396,12 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 	page, err := pagination.Parse(req)
 	if err != nil {
 		log.Error("parse request page info error:", err)
-		return nil, err
+		return nil, pb.ErrInvalidArgument()
 	}
 	var subscribes []model.Subscribe
 	result := &gorm.DB{Error: errors.New("db query error")}
@@ -402,7 +413,7 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 	}
 	if result.Error != nil {
 		log.Error("err:", result.Error)
-		return nil, result.Error
+		return nil, pb.ErrInternalError()
 	}
 
 	data := make([]*pb.SubscribeObject, 0, len(subscribes))
@@ -426,7 +437,7 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 		subscribeResponse, err := s.CreateSubscribe(ctx, createRequest)
 		if err != nil {
 			log.Error("create default subscribe failed:", err)
-			return nil, err
+			return nil, pb.ErrInternalError()
 		}
 		data = append(data, &pb.SubscribeObject{
 			Id:          subscribeResponse.Id,
@@ -460,14 +471,14 @@ func (s *SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeS
 	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 	if len(req.SelectedIds) == 0 {
-		return nil, errors.New("selectedIds is empty")
+		return nil, pb.ErrInvalidArgumentSomeFields()
 	}
 
 	if req.TargetId == 0 {
-		return nil, errors.New("targetId is empty")
+		return nil, pb.ErrInvalidArgumentSomeFields()
 	}
 
 	subscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.Id)}, UserID: authUser.ID}
@@ -475,14 +486,14 @@ func (s *SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeS
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 	targetSubscribe := model.Subscribe{Model: gorm.Model{ID: uint(req.TargetId)}, UserID: authUser.ID}
 	validateSubscribeResult = model.DB().First(&targetSubscribe)
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 
 	errs := []error{}
@@ -512,7 +523,8 @@ func (s *SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeS
 	if len(errs) == len(req.SelectedIds) && len(errs) > 0 {
 		err = errors.Wrap(errs[0], "change subscribed failed")
 		log.Error("err:", err)
-		return nil, err
+		log.Error("more err form db process:", errs)
+		return nil, pb.ErrInternalError()
 	}
 
 	resp := &pb.ChangeSubscribedResponse{Status: SuccessStatus}
@@ -527,10 +539,10 @@ func (s *SubscribeService) ValidateSubscribed(ctx context.Context, req *pb.Valid
 	authUser, err := auth.GetUser(ctx)
 	if nil != err {
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 	if req.Topic == "" {
-		return nil, errors.New("topic is empty")
+		return nil, pb.ErrInvalidArgumentSomeFields()
 	}
 
 	subscribe := model.Subscribe{Endpoint: req.Topic, UserID: authUser.ID}
@@ -539,7 +551,7 @@ func (s *SubscribeService) ValidateSubscribed(ctx context.Context, req *pb.Valid
 	if validateSubscribeResult.RowsAffected == 0 || validateSubscribeResult.Error != nil {
 		err = errors.New("subscribe and user mismatch")
 		log.Error("invalid error:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 	resp := &pb.ValidateSubscribedResponse{Status: SuccessStatus}
 	log.Info("validate subscribe success", req)
@@ -553,7 +565,7 @@ func (s *SubscribeService) SubscribeByDevice(ctx context.Context, req *pb.Subscr
 		return nil, err
 	}
 	if req.Id == "" {
-		return nil, errors.New("invalid device id")
+		return nil, pb.ErrInvalidArgumentSomeFields()
 	}
 	if req.SubscribeIds == nil || len(req.SubscribeIds) == 0 {
 		return nil, errors.New("invalid subscribe ids")
@@ -567,7 +579,7 @@ func (s *SubscribeService) SubscribeByDevice(ctx context.Context, req *pb.Subscr
 	if validateSubscribeResult.RowsAffected != int64(len(req.SubscribeIds)) {
 		err = errors.Wrap(validateSubscribeResult.Error, "device and user mismatch")
 		log.Error("err:", err)
-		return nil, err
+		return nil, pb.ErrUnauthenticated()
 	}
 	subscribeEntities := make([]model.SubscribeEntities, len(req.SubscribeIds))
 	for i := range req.SubscribeIds {
@@ -579,7 +591,7 @@ func (s *SubscribeService) SubscribeByDevice(ctx context.Context, req *pb.Subscr
 	}
 	if err = model.DB().Debug().Create(&subscribeEntities).Error; err != nil {
 		log.Error("create err:", err)
-		return nil, err
+		return nil, pb.ErrInternalError()
 	}
 
 	resp := &pb.SubscribeByDeviceResponse{Status: SuccessStatus}
@@ -661,7 +673,7 @@ func (s SubscribeService) deviceEntities(ids []string, token string) ([]*pb.Enti
 		}
 		if len(resp.Data.Items) == 0 {
 			log.Error("device not found:", id)
-			return nil, errors.New("device not found")
+			return nil, ErrDeviceNotFound
 		}
 		entity := &pb.Entity{
 			ID:        id,

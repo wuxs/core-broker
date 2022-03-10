@@ -21,6 +21,8 @@ var errUnauthenticated *errors.TError
 var errInternalQuery *errors.TError
 var errDeviceNotFound *errors.TError
 var errInvalidArgumentSomeFields *errors.TError
+var errDuplicateCreate *errors.TError
+var errSomeDuplicateCreate *errors.TError
 
 func init() {
 	errUnknown = errors.New(int(codes.Unknown), "io.tkeel.rudder.api.config.v1.ERR_UNKNOWN", "未知类型")
@@ -31,7 +33,7 @@ func init() {
 	errors.Register(errList)
 	errInvalidArgument = errors.New(int(codes.InvalidArgument), "io.tkeel.rudder.api.config.v1.ERR_INVALID_ARGUMENT", "请求参数无效")
 	errors.Register(errInvalidArgument)
-	errInternalError = errors.New(int(codes.Internal), "io.tkeel.rudder.api.config.v1.ERR_INTERNAL_ERROR", "内部错误")
+	errInternalError = errors.New(int(codes.Internal), "io.tkeel.rudder.api.config.v1.ERR_INTERNAL_ERROR", "服务器内部错误")
 	errors.Register(errInternalError)
 	errExist = errors.New(int(codes.InvalidArgument), "io.tkeel.rudder.api.config.v1.ERR_EXIST", "订阅已存在")
 	errors.Register(errExist)
@@ -39,10 +41,14 @@ func init() {
 	errors.Register(errUnauthenticated)
 	errInternalQuery = errors.New(int(codes.Internal), "io.tkeel.rudder.api.config.v1.ERR_INTERNAL_QUERY", "内部资源获取失败")
 	errors.Register(errInternalQuery)
-	errDeviceNotFound = errors.New(int(codes.Ok), "io.tkeel.rudder.api.config.v1.ERR_DEVICE_NOT_FOUND", "未找到设备")
+	errDeviceNotFound = errors.New(int(codes.OK), "io.tkeel.rudder.api.config.v1.ERR_DEVICE_NOT_FOUND", "未找到设备")
 	errors.Register(errDeviceNotFound)
 	errInvalidArgumentSomeFields = errors.New(int(codes.InvalidArgument), "io.tkeel.rudder.api.config.v1.ERR_INVALID_ARGUMENT_SOME_FIELDS", "必须字段未填充有效值")
 	errors.Register(errInvalidArgumentSomeFields)
+	errDuplicateCreate = errors.New(int(codes.InvalidArgument), "io.tkeel.rudder.api.config.v1.ERR_DUPLICATE_CREATE", "重复添加订阅")
+	errors.Register(errDuplicateCreate)
+	errSomeDuplicateCreate = errors.New(int(codes.OK), "io.tkeel.rudder.api.config.v1.ERR_SOME__DUPLICATE_CREATE", "存在重复订阅")
+	errors.Register(errSomeDuplicateCreate)
 }
 
 func ErrUnknown() errors.Error {
@@ -83,4 +89,12 @@ func ErrDeviceNotFound() errors.Error {
 
 func ErrInvalidArgumentSomeFields() errors.Error {
 	return errInvalidArgumentSomeFields
+}
+
+func ErrDuplicateCreate() errors.Error {
+	return errDuplicateCreate
+}
+
+func ErrSomeDuplicateCreate() errors.Error {
+	return errSomeDuplicateCreate
 }

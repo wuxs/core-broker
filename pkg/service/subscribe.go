@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/go-sql-driver/mysql"
 	"github.com/tkeel-io/core-broker/pkg/auth"
 	"strings"
 
@@ -16,9 +17,8 @@ import (
 )
 
 const (
-	SuccessStatus           = "SUCCESS"
-	RepeatedInsertionStatus = "REPEATED INSERTION"
-	ErrPartialFailure       = "PARTIAL FAILURE"
+	SuccessStatus     = "SUCCESS"
+	ErrPartialFailure = "PARTIAL FAILURE"
 
 	_DefaultSubscribeTitle       = "我的订阅"
 	_DefaultSubscribeDescription = "这是我的默认订阅，该订阅无法被删除，但是可以被修改。"
@@ -66,10 +66,14 @@ func (s *SubscribeService) SubscribeEntitiesByIDs(ctx context.Context, req *pb.S
 	result := model.DB().Preload("Subscribe").Create(&records)
 	if result.Error != nil {
 		log.Error("err:", result.Error)
+		mysqlErr, ok := result.Error.(*mysql.MySQLError)
+		if ok && mysqlErr.Number == 1062 {
+			return nil, pb.ErrDuplicateCreate()
+		}
 		return nil, pb.ErrInternalError()
 	}
 	if result.RowsAffected != int64(len(records)) {
-		resp.Status = RepeatedInsertionStatus
+		return nil, pb.ErrSomeDuplicateCreate()
 	}
 
 	return resp, nil
@@ -109,10 +113,14 @@ func (s *SubscribeService) SubscribeEntitiesByGroups(ctx context.Context, req *p
 	result := model.DB().Create(&records)
 	if result.Error != nil {
 		log.Error("err:", result.Error)
+		mysqlErr, ok := result.Error.(*mysql.MySQLError)
+		if ok && mysqlErr.Number == 1062 {
+			return nil, pb.ErrDuplicateCreate()
+		}
 		return nil, pb.ErrInternalError()
 	}
 	if result.RowsAffected != int64(len(records)) {
-		resp.Status = RepeatedInsertionStatus
+		return nil, pb.ErrSomeDuplicateCreate()
 	}
 	return resp, nil
 }
@@ -150,10 +158,14 @@ func (s *SubscribeService) SubscribeEntitiesByModels(ctx context.Context, req *p
 	result := model.DB().Create(&records)
 	if result.Error != nil {
 		log.Error("err:", result.Error)
+		mysqlErr, ok := result.Error.(*mysql.MySQLError)
+		if ok && mysqlErr.Number == 1062 {
+			return nil, pb.ErrDuplicateCreate()
+		}
 		return nil, pb.ErrInternalError()
 	}
 	if result.RowsAffected != int64(len(records)) {
-		resp.Status = RepeatedInsertionStatus
+		return nil, pb.ErrSomeDuplicateCreate()
 	}
 	return resp, nil
 }
@@ -287,6 +299,10 @@ func (s *SubscribeService) CreateSubscribe(ctx context.Context, req *pb.CreateSu
 
 	if err = model.DB().Create(&sub).Error; err != nil {
 		log.Error("err:", err)
+		mysqlErr, ok := err.(*mysql.MySQLError)
+		if ok && mysqlErr.Number == 1062 {
+			return nil, pb.ErrDuplicateCreate()
+		}
 		return nil, pb.ErrInternalError()
 	}
 

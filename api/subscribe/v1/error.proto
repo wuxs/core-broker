@@ -55,4 +55,12 @@ enum Error {
   // @msg=必须字段未填充有效值
   // @code=INVALID_ARGUMENT
   ERR_INVALID_ARGUMENT_SOME_FIELDS = 9;
+
+  // @msg=重复添加订阅
+  // @code=INVALID_ARGUMENT
+  ERR_DUPLICATE_CREATE = 10;
+
+  // @msg=存在重复订阅
+  // @code=OK
+  ERR_SOME__DUPLICATE_CREATE = 11;
 }

@@ -19,6 +19,9 @@ const (
 	SuccessStatus           = "SUCCESS"
 	RepeatedInsertionStatus = "REPEATED INSERTION"
 	ErrPartialFailure       = "PARTIAL FAILURE"
+
+	_DefaultSubscribeTitle       = "我的订阅"
+	_DefaultSubscribeDescription = "这是我的默认订阅，该订阅无法被删除，但是可以被修改。"
 )
 
 type SubscribeService struct {
@@ -414,11 +417,11 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 	}
 
 	resp := &pb.ListSubscribeResponse{}
-	// for template create default subscribe
+	// TODO: for template create default subscribe
 	if len(subscribes) == 0 {
 		createRequest := &pb.CreateSubscribeRequest{
-			Title:       "Default Title",
-			Description: "This is default subscribe.",
+			Title:       _DefaultSubscribeTitle,
+			Description: _DefaultSubscribeDescription,
 		}
 		subscribeResponse, err := s.CreateSubscribe(ctx, createRequest)
 		if err != nil {

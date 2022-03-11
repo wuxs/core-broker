@@ -23,6 +23,7 @@ var errDeviceNotFound *errors.TError
 var errInvalidArgumentSomeFields *errors.TError
 var errDuplicateCreate *errors.TError
 var errSomeDuplicateCreate *errors.TError
+var errTryToDeleteDefaultSubscribe *errors.TError
 
 func init() {
 	errUnknown = errors.New(int(codes.Unknown), "io.tkeel.rudder.api.config.v1.ERR_UNKNOWN", "未知类型")
@@ -49,6 +50,8 @@ func init() {
 	errors.Register(errDuplicateCreate)
 	errSomeDuplicateCreate = errors.New(int(codes.OK), "io.tkeel.rudder.api.config.v1.ERR_SOME__DUPLICATE_CREATE", "存在重复订阅")
 	errors.Register(errSomeDuplicateCreate)
+	errTryToDeleteDefaultSubscribe = errors.New(int(codes.InvalidArgument), "io.tkeel.rudder.api.config.v1.ERR_TRY_TO_DELETE_DEFAULT_SUBSCRIBE", "默认订阅不可删除")
+	errors.Register(errTryToDeleteDefaultSubscribe)
 }
 
 func ErrUnknown() errors.Error {
@@ -97,4 +100,8 @@ func ErrDuplicateCreate() errors.Error {
 
 func ErrSomeDuplicateCreate() errors.Error {
 	return errSomeDuplicateCreate
+}
+
+func ErrTryToDeleteDefaultSubscribe() errors.Error {
+	return errTryToDeleteDefaultSubscribe
 }

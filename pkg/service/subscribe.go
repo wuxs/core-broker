@@ -370,6 +370,9 @@ func (s *SubscribeService) DeleteSubscribe(ctx context.Context, req *pb.DeleteSu
 	}
 
 	if err = model.DB().Delete(&subscribe).Error; err != nil {
+		if errors.Is(err, model.ErrUndeleteable) {
+			return nil, pb.ErrTryToDeleteDefaultSubscribe()
+		}
 		err = errors.Wrap(err, "delete subscribe err")
 		log.Error("err:", err)
 		return nil, pb.ErrInternalError()

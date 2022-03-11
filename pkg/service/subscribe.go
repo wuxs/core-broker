@@ -329,12 +329,9 @@ func (s *SubscribeService) UpdateSubscribe(ctx context.Context, req *pb.UpdateSu
 		return nil, pb.ErrUnauthenticated()
 	}
 
-	if req.Title != "" {
-		subscribe.Title = req.Title
-	}
-	if req.Description != "" {
-		subscribe.Description = req.Description
-	}
+	subscribe.Title = req.Title
+	subscribe.Description = req.Description
+
 	if err = model.DB().Save(&subscribe).Error; err != nil {
 		err = errors.Wrap(err, "update subscribe info err")
 		log.Error("err:", err)

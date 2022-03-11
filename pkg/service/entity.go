@@ -76,7 +76,9 @@ func (s *EntityService) handleRequest(c *websocket.Conn, stopChan chan struct{},
 			if _, ok := s.msgChanMap[entityID]; ok {
 				delete(s.msgChanMap[entityID], clientID)
 				if len(s.msgChanMap[entityID]) == 0 {
-					s.coreClient.Unsubscribe(entityID, "")
+					if err := s.coreClient.Unsubscribe(entityID, ""); err != nil {
+						log.Error("call unsubscribe entity error:", err)
+					}
 					delete(s.msgChanMap, entityID)
 				}
 			}
@@ -100,7 +102,10 @@ func (s *EntityService) handleRequest(c *websocket.Conn, stopChan chan struct{},
 		}
 		if _, ok := s.msgChanMap[entityID]; !ok {
 			s.msgChanMap[entityID] = make(map[string]chan []byte)
-			s.coreClient.Subscribe(entityID, "")
+
+			if err := s.coreClient.Subscribe(entityID, ""); err != nil {
+				log.Error("call subscribing to core err:", err)
+			}
 		}
 		s.msgChanMap[entityID][clientID] = msgChan
 	}

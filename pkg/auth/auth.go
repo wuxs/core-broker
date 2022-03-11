@@ -3,32 +3,32 @@ package auth
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
+	"net/url"
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/tkeel-io/kit/log"
 	tkeelTransutil "github.com/tkeel-io/kit/transport/http"
 )
 
-const _XtKeelAuthUserHeader = "x-tKeel-auth"
+const (
+	_XtKeelAuthUserHeader = "X-Tkeel-Auth"
+	_AuthorizationHeader  = "Authorization"
+)
 
 var (
 	ErrNotFound = errors.New("authorization info not found")
 )
 
 type User struct {
-	ID       string `json:"id"`
-	TenantID string `json:"tenant_id"`
-	Token    string `json:"token"`
+	ID    string `json:"id"`
+	Role  string `json:"role"`
+	Token string `json:"token"`
 }
 
 func GetUser(ctx context.Context) (User, error) {
 	u := User{}
-
-	log.Debugf("get header from ctx: %v", tkeelTransutil.HeaderFromContext(ctx))
-
-	authHTTPHeader, ok := tkeelTransutil.HeaderFromContext(ctx)[_XtKeelAuthUserHeader]
+	headers := tkeelTransutil.HeaderFromContext(ctx)
+	authHTTPHeader, ok := headers[_XtKeelAuthUserHeader]
 	if !ok {
 		return u, ErrNotFound
 	}
@@ -38,11 +38,16 @@ func GetUser(ctx context.Context) (User, error) {
 		err = errors.Wrap(err, "decode auth header error")
 		return u, err
 	}
-	log.Debugf("Print Decode Auth Info: %s", string(authStrBytes))
-	err = json.Unmarshal(authStrBytes, &u)
+	q, err := url.ParseQuery(string(authStrBytes))
 	if err != nil {
-		err = errors.Wrap(err, "unmarshal auth header error")
+		err = errors.Wrap(err, "parse auth header error")
 		return u, err
+	}
+	u.ID = q.Get("user")
+	u.Role = q.Get("role")
+	token, ok := headers[_AuthorizationHeader]
+	if ok {
+		u.Token = strings.Join(token, "")
 	}
 	return u, nil
 }

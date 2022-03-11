@@ -60,8 +60,6 @@ spec:
               value: {{ printf "%s-redis-public-store" .Values.middleware.name }}
             - name: DSN
               value: "root:a3fks=ixmeb82a@tcp(tkeel-core-broker-mysql:3306)/core_broker?charset=utf8mb4&parseTime=True&loc=Local"
-            - name: AMQP_SERVER
-              value: "amqp://$(TKEEL_TENANT_HOST):$(AMQP_SERVER_PORT)"
             - name: TKEEL_TENANT_HOST
               valueFrom:
                 configMapKeyRef:
@@ -72,6 +70,8 @@ spec:
                 configMapKeyRef:
                   name: tkeel-install-config
                   key: AMQP_SERVER_PORT
+            - name: AMQP_SERVER
+              value: "amqp://$(TKEEL_TENANT_HOST):$(AMQP_SERVER_PORT)"
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

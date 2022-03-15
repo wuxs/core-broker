@@ -63,7 +63,7 @@ func Setup() error {
 	return db.AutoMigrate(&Subscribe{}, &SubscribeEntities{})
 }
 
-func MakeAMQPAddress(endpoint string) string {
+func AMQPAddressString(endpoint string) string {
 	return AMQPServerAddr + "/" + endpoint
 }
 

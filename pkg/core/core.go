@@ -91,7 +91,7 @@ func (c *Client) Unsubscribe(entityID string, topic string) error {
 	methodName := fmt.Sprintf("v1/subscriptions/%s?owner=admin&source=dm&type=SUBSCRIPTION", subscriptionID)
 	log.Debug("invoke unsubscribe to Core: ", methodName)
 	if c, err := c.daprClient.InvokeMethod(ctx, AppID, methodName, http.MethodDelete); err != nil {
-		log.Error("invoke "+methodName, err)
+		log.Error("invoke ", methodName, " with ", http.MethodDelete, err)
 		log.Error("invoke Response:", string(c))
 		return err
 	}

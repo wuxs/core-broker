@@ -399,7 +399,7 @@ func (s *SubscribeService) GetSubscribe(ctx context.Context, req *pb.GetSubscrib
 		Id:          uint64(subscribe.ID),
 		Title:       subscribe.Title,
 		Description: subscribe.Description,
-		Endpoint:    model.MakeAMQPAddress(subscribe.Endpoint),
+		Endpoint:    model.AMQPAddressString(subscribe.Endpoint),
 		Count:       uint64(count),
 		CreatedAt:   subscribe.CreatedAt.Unix(),
 		UpdatedAt:   subscribe.UpdatedAt.Unix(),
@@ -438,7 +438,7 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 			Id:          uint64(subscribes[i].ID),
 			Title:       subscribes[i].Title,
 			Description: subscribes[i].Description,
-			Endpoint:    model.MakeAMQPAddress(subscribes[i].Endpoint),
+			Endpoint:    model.AMQPAddressString(subscribes[i].Endpoint),
 			IsDefault:   subscribes[i].IsDefault,
 		})
 	}

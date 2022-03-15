@@ -43,7 +43,7 @@ enum Error {
   // @code=INVALID_ARGUMENT
   ERR_EXIST = 5;
   // @msg=请确保您对资源拥有相应权限
-  // @code=UNAUTHENTICATED
+  // @code=PERMISSION_DENIED
   ERR_UNAUTHENTICATED = 6;
   // @msg=内部资源获取失败
   // @code=INTERNAL
@@ -62,7 +62,7 @@ enum Error {
 
   // @msg=存在重复订阅
   // @code=OK
-  ERR_SOME__DUPLICATE_CREATE = 11;
+  ERR_SOME_DUPLICATE_CREATE = 11;
 
   // @msg=默认订阅不可删除
   // @code=INVALID_ARGUMENT

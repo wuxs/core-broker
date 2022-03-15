@@ -71,7 +71,7 @@ spec:
                   name: tkeel-install-config
                   key: AMQP_SERVER_PORT
             - name: AMQP_SERVER
-              value: "amqp://$(TKEEL_TENANT_HOST):$(AMQP_SERVER_PORT)"
+              value: "amqp://$(TKEEL_TENANT_HOST):30082"
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

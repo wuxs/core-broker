@@ -56,19 +56,6 @@ func (s *EntityService) Run() {
 			subID := types.Interface2string(kv["id"])
 			entityID = types.GetEntityID(subID)
 			msgData, _ = json.Marshal(kv["properties"])
-		case []byte:
-			pe := core.ProtoEvent{}
-			if err := core.Unmarshal(kv, &pe); err != nil {
-				log.Error("unmarshal proto event error:", err)
-				continue
-			}
-			subID := pe.ID()
-			entityID = types.GetEntityID(subID)
-			msgData, _ = json.Marshal(pe.RawData())
-		case core.Event:
-			subID := kv.ID()
-			entityID = types.GetEntityID(subID)
-			msgData, _ = json.Marshal(kv.RawData())
 		}
 
 		if clientMsgChan, ok := s.msgChanMap[entityID]; ok {

@@ -33,7 +33,9 @@ func (s *Subscribe) BeforeDelete(tx *gorm.DB) error {
 		return NewUndeleteable("this is default subscribe")
 	}
 	destroyEndpoint(tx, s.Endpoint)
-	destroyRelevant(tx, s.ID)
+	if err := destroyRelevant(tx, s); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -42,9 +44,27 @@ func destroyEndpoint(tx *gorm.DB, endpoint string) {
 	log.Debug("destroy endpoint: %s", endpoint)
 }
 
-func destroyRelevant(tx *gorm.DB, id uint) {
-	tx.Delete(&SubscribeEntities{}, "subscribe_id = ?", id)
-	log.Debugf("destroy Relevant subscribe id: %d", id)
+func destroyRelevant(tx *gorm.DB, subscribe *Subscribe) error {
+	log.Debugf("destroy Relevant subscribe id: %d", subscribe.ID)
+	relevants := make([]SubscribeEntities, 0)
+	result := tx.Session(&gorm.Session{NewDB: true}).Model(&SubscribeEntities{}).Where("subscribe_id = ?", subscribe.ID).Find(&relevants)
+	if result.Error != nil {
+		log.Error("Find deleted subscription relevants error:", result.Error)
+		return result.Error
+	}
+	for _, relevant := range relevants {
+		relevant.Subscribe = *subscribe
+		result = tx.Session(&gorm.Session{NewDB: true}).
+			Where("subscribe_id = ?", relevant.SubscribeID).
+			Where("unique_key = ?", relevant.UniqueKey).
+			Where("entity_id", relevant.EntityID).
+			Delete(&relevant)
+		if result.Error != nil {
+			log.Error("delete subscription relevant error:", result.Error)
+			return result.Error
+		}
+	}
+	return nil
 }
 
 type SubscribeEntities struct {
@@ -74,7 +94,7 @@ func (e *SubscribeEntities) AfterCreate(tx *gorm.DB) error {
 	}
 	if err := updateEntitySubscribeEndpoint(e.EntityID,
 		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10),
-			MakeAMQPAddress(e.Subscribe.Endpoint)}, "@"),
+			AMQPAddressString(e.Subscribe.Endpoint)}, "@"),
 		add); err != nil {
 		err = errors.Wrap(err, "update entity subscribe endpoint err")
 		log.Error(err)
@@ -86,12 +106,13 @@ func (e *SubscribeEntities) AfterCreate(tx *gorm.DB) error {
 func (e *SubscribeEntities) BeforeDelete(tx *gorm.DB) error {
 	// this condition will skip by destroyRelevant() function
 	if e.EntityID == "" && e.Subscribe.Endpoint == "" {
+		log.Debug("skip because no releases info")
 		return nil
 	}
 	log.Debug("deleted of SubscribeEntities:", *e)
 	if err := updateEntitySubscribeEndpoint(e.EntityID,
 		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10),
-			MakeAMQPAddress(e.Subscribe.Endpoint)}, "@"),
+			AMQPAddressString(e.Subscribe.Endpoint)}, "@"),
 		reduce); err != nil {
 		return err
 	}

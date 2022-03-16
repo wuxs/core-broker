@@ -43,35 +43,27 @@ func Setup() error {
 	}
 
 	dsn := os.Getenv(dsnFromOSEnvKey)
-	slashIndex := strings.LastIndex(dsn, "/")
-	_dsn := dsn[:slashIndex+1]
-	items := strings.Split(dsn[slashIndex+1:], "?")
-	dbName := items[0]
-	_dsn = fmt.Sprintf("%s?%s", _dsn, items[1])
-	dbInit, err := gorm.Open(mysql.Open(_dsn), nil)
+
+	// Try to create DB first.
+	connectionInfo, dbName := withoutDBConnectionAndDBName(dsn)
+	noDBConnection, err := gorm.Open(mysql.Open(connectionInfo), nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	createSQL := fmt.Sprintf(
-		"CREATE DATABASE IF NOT EXISTS `%s` CHARACTER SET utf8mb4;",
-		dbName,
-	)
-
-	err = dbInit.Exec(createSQL).Error
-	if err != nil {
+	if err = noDBConnection.Exec(createDBSQL(dbName)).Error; err != nil {
 		log.Fatal(err)
 	}
 
-	connection, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	// Open the DB
+	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err)
 	}
-	db = connection
 	return db.AutoMigrate(&Subscribe{}, &SubscribeEntities{})
 }
 
-func MakeAMQPAddress(endpoint string) string {
+func AMQPAddressString(endpoint string) string {
 	return AMQPServerAddr + "/" + endpoint
 }
 
@@ -111,4 +103,24 @@ func ListAll(find interface{}, where interface{}, args ...interface{}) *gorm.DB 
 
 func Count(count *int64, model interface{}, where interface{}, args ...interface{}) *gorm.DB {
 	return DB().Model(model).Where(where, args).Count(count)
+}
+
+func withoutDBConnectionAndDBName(dsn string) (connection, dbName string) {
+	slashIndex := strings.LastIndex(dsn, "/")
+	connectionInfo := dsn[:slashIndex+1]
+	dbSettings := dsn[slashIndex+1:]
+	questionIndex := strings.Index(dbSettings, "?")
+	if questionIndex == -1 {
+		questionIndex = len(dbSettings)
+	}
+	dbName = dbSettings[:questionIndex]
+	query := dbSettings[questionIndex:]
+	connection = connectionInfo + query
+	return
+}
+
+const createSQLTemplate = "CREATE DATABASE IF NOT EXISTS `%s` CHARACTER SET utf8mb4;"
+
+func createDBSQL(dbName string) string {
+	return fmt.Sprintf(createSQLTemplate, dbName)
 }

@@ -48,6 +48,9 @@ func (s *EntityService) Run() {
 	var msgData []byte
 	for {
 		msg := <-types.MsgChan
+		log.Debugf("event msg data: %+v", msg.Data.AsInterface())
+		log.Debugf("event msg data: %#v", msg.Data.AsInterface())
+		log.Debugf("event msg data type: %T", msg.Data.AsInterface())
 		switch kv := msg.Data.AsInterface().(type) {
 		case map[string]interface{}:
 			subID := types.Interface2string(kv["id"])
@@ -76,7 +79,9 @@ func (s *EntityService) handleRequest(c *websocket.Conn, stopChan chan struct{},
 			if _, ok := s.msgChanMap[entityID]; ok {
 				delete(s.msgChanMap[entityID], clientID)
 				if len(s.msgChanMap[entityID]) == 0 {
-					s.coreClient.Unsubscribe(entityID, "")
+					if err := s.coreClient.Unsubscribe(entityID, ""); err != nil {
+						log.Error("call unsubscribe entity error:", err)
+					}
 					delete(s.msgChanMap, entityID)
 				}
 			}
@@ -100,7 +105,10 @@ func (s *EntityService) handleRequest(c *websocket.Conn, stopChan chan struct{},
 		}
 		if _, ok := s.msgChanMap[entityID]; !ok {
 			s.msgChanMap[entityID] = make(map[string]chan []byte)
-			s.coreClient.Subscribe(entityID, "")
+
+			if err := s.coreClient.Subscribe(entityID, ""); err != nil {
+				log.Error("call subscribing to core err:", err)
+			}
 		}
 		s.msgChanMap[entityID][clientID] = msgChan
 	}

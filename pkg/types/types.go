@@ -21,22 +21,9 @@ import (
 	"strings"
 
 	pb "github.com/tkeel-io/core-broker/api/topic/v1"
-	"github.com/tkeel-io/kit/log"
-)
-
-const (
-	_tKeelHostConfig = "TKEEL_TENANT_HOST"
 )
 
 var Topic, _ = os.Hostname()
-
-func InitConfig() {
-	val := os.Getenv(_tKeelHostConfig)
-	log.Debugf("InitConfig tKeelInstallConfig: %v", val)
-	if val != "" {
-		Topic = val
-	}
-}
 
 var MsgChan = make(chan *pb.TopicEventRequest, 100)
 

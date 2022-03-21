@@ -696,8 +696,11 @@ func (s SubscribeService) deviceEntities(ids []string, token string) ([]*pb.Enti
 			Name:      resp.Data.Items[0].Properties.BasicInfo.Name,
 			Template:  resp.Data.Items[0].Properties.BasicInfo.TemplateName,
 			Group:     resp.Data.Items[0].Properties.BasicInfo.ParentName,
-			Status:    resp.Data.Items[0].Properties.SysField.Status,
+			Status:    "offline",
 			UpdatedAt: resp.Data.Items[0].Properties.SysField.UpdatedAt,
+		}
+		if resp.Data.Items[0].Properties.ConnectionInfo.IsOnline {
+			entity.Status = "online"
 		}
 		entities = append(entities, entity)
 	}

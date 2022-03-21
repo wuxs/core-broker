@@ -2,6 +2,7 @@ package deviceutil
 
 import (
 	"encoding/json"
+	"github.com/tkeel-io/kit/log"
 )
 
 type SearchResponse struct {
@@ -38,9 +39,10 @@ type Object struct {
 }
 
 type Property struct {
-	Group     Group     `json:"group,omitempty"`
-	BasicInfo BasicInfo `json:"basicInfo"`
-	SysField  SysField  `json:"sysField"`
+	Group          Group          `json:"group,omitempty"`
+	ConnectionInfo ConnectionInfo `json:"connectInfo,omitempty"`
+	BasicInfo      BasicInfo      `json:"basicInfo"`
+	SysField       SysField       `json:"sysField"`
 }
 
 type Group struct {
@@ -56,6 +58,17 @@ type BasicInfo struct {
 	TemplateName string `json:"templateName"`
 	ParentID     string `json:"parentId"`
 	ParentName   string `json:"parentName"`
+}
+
+type ConnectionInfo struct {
+	ID        string `json:"_clientId"`
+	IsOnline  bool   `json:"_online"`
+	Owner     string `json:"_owner"`
+	PeerHost  string `json:"_peerHost"`
+	Protocol  string `json:"_protocol"`
+	Sockport  string `json:"_sockPort"`
+	Timestamp uint64 `json:"_timestamp"`
+	Username  string `json:"_username"`
 }
 
 type SysField struct {
@@ -82,5 +95,7 @@ func ParseSearchEntityResponse(bytes []byte) (*SearchEntityResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Debug("source response: %s", string(bytes))
+	log.Debug("after json unmarshal: %+v", response)
 	return &response, nil
 }

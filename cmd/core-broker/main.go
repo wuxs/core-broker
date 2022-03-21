@@ -25,7 +25,6 @@ import (
 
 	"github.com/tkeel-io/core-broker/pkg/server"
 	"github.com/tkeel-io/core-broker/pkg/service"
-	"github.com/tkeel-io/core-broker/pkg/types"
 	"github.com/tkeel-io/kit/app"
 	"github.com/tkeel-io/kit/log"
 	"github.com/tkeel-io/kit/transport"
@@ -70,8 +69,6 @@ func main() {
 		},
 		serverList...,
 	)
-
-	types.InitConfig()
 
 	{ // User service
 		OpenapiSrv := service.NewOpenapiService()

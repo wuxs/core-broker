@@ -23,10 +23,6 @@ import (
 	pb "github.com/tkeel-io/core-broker/api/topic/v1"
 )
 
-const (
-	_tKeelHostConfig = "TKEEL_TENANT_HOST"
-)
-
 var Topic, _ = os.Hostname()
 
 var MsgChan = make(chan *pb.TopicEventRequest, 100)

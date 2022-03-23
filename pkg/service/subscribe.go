@@ -623,7 +623,7 @@ func (s *SubscribeService) getDeviceEntitiesIDsFromGroups(ctx context.Context, g
 	var data []string
 	dc := deviceutil.NewClient(token)
 	for i := range groups {
-		bytes, err := dc.SearchDefault(deviceutil.DeviceSearch, deviceutil.Conditions{deviceutil.GroupQuery(groups[i]), deviceutil.DeviceTypeQuery()})
+		bytes, err := dc.Search(deviceutil.DeviceSearch, deviceutil.Conditions{deviceutil.GroupQuery(groups[i]), deviceutil.DeviceTypeQuery()})
 		if err != nil {
 			log.Error("query device by device group err:", err)
 			return nil, err
@@ -646,7 +646,7 @@ func (s *SubscribeService) getDeviceEntitiesIDsFromTemplates(ctx context.Context
 	var data []string
 	dc := deviceutil.NewClient(token)
 	for i := range templates {
-		bytes, err := dc.SearchDefault(deviceutil.DeviceSearch, deviceutil.Conditions{deviceutil.TemplateQuery(templates[i])})
+		bytes, err := dc.Search(deviceutil.DeviceSearch, deviceutil.Conditions{deviceutil.TemplateQuery(templates[i])})
 		if err != nil {
 			log.Error("query device by device group err:", err)
 			return nil, err
@@ -668,7 +668,7 @@ func (s SubscribeService) deviceEntities(ids []string, token string) ([]*pb.Enti
 	entities := make([]*pb.Entity, 0, len(ids))
 	client := deviceutil.NewClient(token)
 	for _, id := range ids {
-		bytes, err := client.SearchDefault(deviceutil.EntitySearch, deviceutil.Conditions{deviceutil.DeviceQuery(id)})
+		bytes, err := client.Search(deviceutil.EntitySearch, deviceutil.Conditions{deviceutil.DeviceQuery(id)})
 		if err != nil {
 			log.Error("query device by device id err:", err)
 			return nil, err
@@ -702,7 +702,8 @@ func (s SubscribeService) getEntitiesByConditions(conditions deviceutil.Conditio
 	client := deviceutil.NewClient(token)
 	entities := make([]*pb.Entity, 0)
 
-	bytes, err := client.Search(deviceutil.EntitySearch, conditions, query, num, size)
+	bytes, err := client.Search(deviceutil.EntitySearch, conditions,
+		deviceutil.WithQuery(query), deviceutil.WithPagination(num, size))
 	if err != nil {
 		log.Error("query device by device id err:", err)
 		return nil, err

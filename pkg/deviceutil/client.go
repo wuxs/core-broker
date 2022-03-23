@@ -3,6 +3,7 @@ package deviceutil
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -33,43 +34,36 @@ func NewClient(token string) *Client {
 	}
 }
 
-func (c Client) SearchDefault(url Service, conditions Conditions) ([]byte, error) {
+type RequestOption func(*SearchRequest) error
+
+func WithPagination(page, size int32) RequestOption {
+	return func(req *SearchRequest) error {
+		if page == 0 {
+			return errors.New("page must be greater than 0")
+		}
+		req.PageNum = page
+		req.PageSize = size
+		return nil
+	}
+}
+
+func WithQuery(query string) RequestOption {
+	return func(req *SearchRequest) error {
+		req.Query = query
+		return nil
+	}
+}
+
+func (c Client) Search(url Service, conditions Conditions, options ...RequestOption) ([]byte, error) {
 	searchRequest := SearchRequest{
 		PageNum:    1,
 		PageSize:   5000,
 		Conditions: conditions,
 	}
-	content, err := json.Marshal(&searchRequest)
-	log.Info("Device Search Request URL:", url)
-	log.Info("Device Search Request Body:", string(content))
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodPost, url.String(), bytes.NewBuffer(content))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Authorization", c.token)
-	req.Header.Add("Content-Type", "application/json")
-
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	return ioutil.ReadAll(resp.Body)
-}
-
-func (c Client) Search(url Service, conditions Conditions, query string, num, size int32) ([]byte, error) {
-	if num == 0 {
-		num = 1
-	}
-	searchRequest := SearchRequest{
-		PageNum:    num,
-		PageSize:   size,
-		Conditions: conditions,
-		Query:      query,
+	for _, option := range options {
+		if err := option(&searchRequest); err != nil {
+			return nil, err
+		}
 	}
 	content, err := json.Marshal(&searchRequest)
 	log.Info("Device Search Request URL:", url)

@@ -33,11 +33,43 @@ func NewClient(token string) *Client {
 	}
 }
 
-func (c Client) Search(url Service, conditions Conditions) ([]byte, error) {
+func (c Client) SearchDefault(url Service, conditions Conditions) ([]byte, error) {
 	searchRequest := SearchRequest{
 		PageNum:    1,
 		PageSize:   5000,
 		Conditions: conditions,
+	}
+	content, err := json.Marshal(&searchRequest)
+	log.Info("Device Search Request URL:", url)
+	log.Info("Device Search Request Body:", string(content))
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, url.String(), bytes.NewBuffer(content))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Authorization", c.token)
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	return ioutil.ReadAll(resp.Body)
+}
+
+func (c Client) Search(url Service, conditions Conditions, query string, num, size int32) ([]byte, error) {
+	if num == 0 {
+		num = 1
+	}
+	searchRequest := SearchRequest{
+		PageNum:    num,
+		PageSize:   size,
+		Conditions: conditions,
+		Query:      query,
 	}
 	content, err := json.Marshal(&searchRequest)
 	log.Info("Device Search Request URL:", url)
@@ -139,5 +171,21 @@ func DeviceQuery(id string) ConditionQuery {
 		Field:    "id",
 		Operator: "$eq",
 		Value:    id,
+	}
+}
+
+func EqQuery(field, value string) ConditionQuery {
+	return ConditionQuery{
+		Field:    field,
+		Operator: "$eq",
+		Value:    value,
+	}
+}
+
+func WildcardQuery(field, value string) ConditionQuery {
+	return ConditionQuery{
+		Field:    field,
+		Operator: "$wildcard",
+		Value:    value,
 	}
 }

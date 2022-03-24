@@ -236,7 +236,7 @@ func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.Li
 	conditions := make(deviceutil.Conditions, 0)
 	conditions = append(conditions, deviceutil.EqQuery(Owner, authUser.ID))
 	conditions = append(conditions, deviceutil.WildcardQuery(SubscribePath, subscribe.Endpoint))
-	data, err := s.getEntitiesByConditions(conditions, authUser.Token, page.KeyWords, int32(page.Num), int32(page.Size))
+	data, err := s.getEntitiesByConditions(conditions, authUser.Token, &page)
 	if err != nil {
 		log.Error("err:", err)
 		if errors.Is(err, ErrDeviceNotFound) {
@@ -246,10 +246,9 @@ func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.Li
 	}
 
 	resp := &pb.ListSubscribeEntitiesResponse{}
-	page.SetTotal(uint(len(data)))
 	err = page.FillResponse(resp)
 	if err != nil {
-		log.Error("err:", err)
+		log.Error("page fill error:", err)
 		return nil, pb.ErrList()
 	}
 	resp.Data = data
@@ -698,12 +697,12 @@ func (s SubscribeService) deviceEntities(ids []string, token string) ([]*pb.Enti
 	return entities, nil
 }
 
-func (s SubscribeService) getEntitiesByConditions(conditions deviceutil.Conditions, token, query string, num, size int32) ([]*pb.Entity, error) {
+func (s SubscribeService) getEntitiesByConditions(conditions deviceutil.Conditions, token string, page *pagination.Page) ([]*pb.Entity, error) {
 	client := deviceutil.NewClient(token)
 	entities := make([]*pb.Entity, 0)
 
 	bytes, err := client.Search(deviceutil.EntitySearch, conditions,
-		deviceutil.WithQuery(query), deviceutil.WithPagination(num, size))
+		deviceutil.WithQuery(page.SearchKey), deviceutil.WithPagination(int32(page.Num), int32(page.Size)))
 	if err != nil {
 		log.Error("query device by device id err:", err)
 		return nil, err
@@ -717,6 +716,7 @@ func (s SubscribeService) getEntitiesByConditions(conditions deviceutil.Conditio
 		log.Error("device not found:", conditions)
 		return nil, ErrDeviceNotFound
 	}
+	page.SetTotal(uint(resp.Data.Total))
 
 	for _, item := range resp.Data.Items {
 		entity := &pb.Entity{

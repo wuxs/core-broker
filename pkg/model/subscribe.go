@@ -96,7 +96,7 @@ func (e *SubscribeEntities) AfterCreate(tx *gorm.DB) error {
 	if err := updateEntitySubscribeEndpoint(e.EntityID,
 		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10),
 			AMQPAddressString(e.Subscribe.Endpoint)}, "@"),
-		add); err != nil {
+		Add); err != nil {
 		err = errors.Wrap(err, "update entity subscribe endpoint err")
 		log.Error(err)
 		return err
@@ -114,7 +114,7 @@ func (e *SubscribeEntities) BeforeDelete(tx *gorm.DB) error {
 	if err := updateEntitySubscribeEndpoint(e.EntityID,
 		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10),
 			AMQPAddressString(e.Subscribe.Endpoint)}, "@"),
-		reduce); err != nil {
+		Reduce); err != nil {
 		return err
 	}
 	if err := deleteCoreSubscription(e.EntityID, e.Subscribe.Endpoint); err != nil {
@@ -135,8 +135,8 @@ func deleteCoreSubscription(entityID string, topic string) error {
 type choice uint8
 
 const (
-	add choice = iota + 1
-	reduce
+	Add choice = iota + 1
+	Reduce
 )
 
 func updateEntitySubscribeEndpoint(entityID, endpoint string, c choice) error {
@@ -151,14 +151,14 @@ func updateEntitySubscribeEndpoint(entityID, endpoint string, c choice) error {
 	}
 	subscribeAddr := endpoint
 	switch c {
-	case add:
+	case Add:
 		if strings.Contains(device.Properties.SysField.SubscribeAddr, endpoint) {
 			return nil
 		}
 		if device.Properties.SysField.SubscribeAddr != "" {
 			subscribeAddr = strings.Join([]string{device.Properties.SysField.SubscribeAddr, endpoint}, separator)
 		}
-	case reduce:
+	case Reduce:
 		addrs := strings.Split(device.Properties.SysField.SubscribeAddr, separator)
 		validAddresses := make([]string, 0, len(addrs))
 		for i := range addrs {
@@ -182,7 +182,7 @@ func updateEntitySubscribeEndpoint(entityID, endpoint string, c choice) error {
 	})
 
 	log.Debug("patchData:", patchData)
-	log.Debug("call patch on choice (add 1, reduce 2):", c)
+	log.Debug("call patch on choice (Add 1, Reduce 2):", c)
 
 	if err = coreClient.PatchEntity(entityID, patchData); err != nil {
 		err = errors.Wrap(err, "patch entity err")
@@ -208,14 +208,14 @@ func UpdateEntityRuleInfo(client *core.Client, entityID, ruleinfo string, c choi
 	}
 	val := ruleinfo
 	switch c {
-	case add:
+	case Add:
 		if strings.Contains(device.Properties.SysField.RuleInfo, ruleinfo) {
 			return nil
 		}
 		if device.Properties.SysField.RuleInfo != "" {
 			val = strings.Join([]string{device.Properties.SysField.RuleInfo, ruleinfo}, separator)
 		}
-	case reduce:
+	case Reduce:
 		info := strings.Split(device.Properties.SysField.RuleInfo, separator)
 		validAddresses := make([]string, 0, len(info))
 		for i := range info {
@@ -238,7 +238,7 @@ func UpdateEntityRuleInfo(client *core.Client, entityID, ruleinfo string, c choi
 	})
 
 	log.Debug("patchData:", patchData)
-	log.Debug("call patch on choice (add 1, reduce 2):", c)
+	log.Debug("call patch on choice (Add 1, Reduce 2):", c)
 
 	if err = client.PatchEntity(entityID, patchData); err != nil {
 		err = errors.Wrap(err, "patch entity err")

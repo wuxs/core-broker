@@ -132,14 +132,14 @@ func deleteCoreSubscription(entityID string, topic string) error {
 	return coreClient.Unsubscribe(entityID, topic)
 }
 
-type choice uint8
+type UtilChoice uint8
 
 const (
-	Add choice = iota + 1
+	Add UtilChoice = iota + 1
 	Reduce
 )
 
-func updateEntitySubscribeEndpoint(entityID, endpoint string, c choice) error {
+func updateEntitySubscribeEndpoint(entityID, endpoint string, c UtilChoice) error {
 	separator := ","
 	patchData := make([]map[string]interface{}, 0)
 
@@ -182,7 +182,7 @@ func updateEntitySubscribeEndpoint(entityID, endpoint string, c choice) error {
 	})
 
 	log.Debug("patchData:", patchData)
-	log.Debug("call patch on choice (Add 1, Reduce 2):", c)
+	log.Debug("call patch on UtilChoice (Add 1, Reduce 2):", c)
 
 	if err = coreClient.PatchEntity(entityID, patchData); err != nil {
 		err = errors.Wrap(err, "patch entity err")
@@ -196,7 +196,7 @@ func NewUndeleteable(content string) error {
 	return errors.Wrap(ErrUndeleteable, content)
 }
 
-func UpdateEntityRuleInfo(client *core.Client, entityID, ruleinfo string, c choice) error {
+func UpdateEntityRuleInfo(client *core.Client, entityID, ruleinfo string, c UtilChoice) error {
 	separator := ","
 	patchData := make([]map[string]interface{}, 0)
 
@@ -238,7 +238,7 @@ func UpdateEntityRuleInfo(client *core.Client, entityID, ruleinfo string, c choi
 	})
 
 	log.Debug("patchData:", patchData)
-	log.Debug("call patch on choice (Add 1, Reduce 2):", c)
+	log.Debug("call patch on UtilChoice (Add 1, Reduce 2):", c)
 
 	if err = client.PatchEntity(entityID, patchData); err != nil {
 		err = errors.Wrap(err, "patch entity err")

@@ -52,3 +52,26 @@ func (c Client) GetDeviceEntity(entityID string) (*Entity, error) {
 
 	return &response.Data, nil
 }
+
+func (c Client) CreateEntity(id, userID, source string) (*Entity, error) {
+	ctx := context.Background()
+	createEntityURL := CreateEntityURL(id, userID, source)
+
+	log.Debugf("invoke create entity %s", createEntityURL)
+	resp, err := c.daprClient.InvokeMethod(ctx, AppID, createEntityURL, http.MethodPost)
+	if err != nil {
+		log.Errorf("invoke %s \n response content: %s \n err:%v", createEntityURL, string(resp), err)
+		return nil, err
+	}
+
+	response := &GetEntityResponse{}
+	if err = json.Unmarshal(resp, response); err != nil {
+		log.Errorf("unmarshal response content: %s \n err:%v", string(resp), err)
+		return nil, err
+	}
+
+	log.Debug("create entity response raw:", string(resp))
+	log.Debug("create entity:", response)
+
+	return &response.Data, nil
+}

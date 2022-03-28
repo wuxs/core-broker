@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/tkeel-io/core-broker/pkg/core"
 	"strconv"
 	"strings"
 
@@ -193,4 +194,56 @@ func updateEntitySubscribeEndpoint(entityID, endpoint string, c choice) error {
 
 func NewUndeleteable(content string) error {
 	return errors.Wrap(ErrUndeleteable, content)
+}
+
+func UpdateEntityRuleInfo(client *core.Client, entityID, ruleinfo string, c choice) error {
+	separator := ","
+	patchData := make([]map[string]interface{}, 0)
+
+	device, err := client.GetDeviceEntity(entityID)
+	log.Debug("get device entity:", device)
+	if err != nil {
+		log.Error("get entity err:", err)
+		return err
+	}
+	val := ruleinfo
+	switch c {
+	case add:
+		if strings.Contains(device.Properties.SysField.RuleInfo, ruleinfo) {
+			return nil
+		}
+		if device.Properties.SysField.RuleInfo != "" {
+			val = strings.Join([]string{device.Properties.SysField.RuleInfo, ruleinfo}, separator)
+		}
+	case reduce:
+		info := strings.Split(device.Properties.SysField.RuleInfo, separator)
+		validAddresses := make([]string, 0, len(info))
+		for i := range info {
+			if info[i] != ruleinfo {
+				validAddresses = append(validAddresses, info[i])
+			}
+		}
+		if len(validAddresses) != 0 {
+			val = strings.Join(validAddresses, separator)
+		} else {
+			val = ""
+		}
+		log.Debugf("generated val: %s", val)
+	}
+
+	patchData = append(patchData, map[string]interface{}{
+		"operator": "replace",
+		"path":     "sysField._ruleInfo",
+		"value":    val,
+	})
+
+	log.Debug("patchData:", patchData)
+	log.Debug("call patch on choice (add 1, reduce 2):", c)
+
+	if err = client.PatchEntity(entityID, patchData); err != nil {
+		err = errors.Wrap(err, "patch entity err")
+		return err
+	}
+
+	return nil
 }

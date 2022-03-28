@@ -53,6 +53,7 @@ type SysField struct {
 	Source        string `json:"_source"`
 	Status        string `json:"_status"`
 	SubscribeAddr string `json:"_subscribeAddr"`
+	RuleInfo      string `json:"_ruleInfo"`
 	CreatedAt     int64  `json:"_createdAt"`
 	UpdatedAt     int64  `json:"_updatedAt"`
 }

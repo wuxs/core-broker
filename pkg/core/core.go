@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"net/http"
 
-	dapr "github.com/dapr/go-sdk/client"
-	"github.com/pkg/errors"
 	"github.com/tkeel-io/core-broker/pkg/types"
 	"github.com/tkeel-io/kit/log"
+
+	dapr "github.com/dapr/go-sdk/client"
+	"github.com/pkg/errors"
 )
 
 type Client struct {
@@ -32,15 +33,13 @@ type SubscriptionData struct {
 	PubsubName string `json:"pubsub_name,omitempty"`
 }
 
-func (c *Client) Subscribe(entityID string, topic string, mixFunc func(string, string) string) error {
-	ctx := context.Background()
-
-	if mixFunc == nil {
-		mixFunc = func(entityID string, topic string) string {
-			return entityID + "_" + topic
-		}
+func (c *Client) Subscribe(subscriptionID, entityID, topic string) error {
+	if subscriptionID == "" ||
+		entityID == "" ||
+		topic == "" {
+		return errors.New("subscriptionID, entityID or topic is empty")
 	}
-	subscriptionID := mixFunc(entityID, topic)
+	ctx := context.Background()
 	filter := IntoFilterQuery(subscriptionID, entityID)
 	subscriptionRequestData := SubscriptionData{
 		Mode:       "realtime",
@@ -73,9 +72,8 @@ func (c *Client) Subscribe(entityID string, topic string, mixFunc func(string, s
 	return nil
 }
 
-func (c *Client) Unsubscribe(entityID string, topic string, mixFunc func(string, string) string) error {
+func (c *Client) Unsubscribe(subscriptionID string) error {
 	ctx := context.Background()
-	subscriptionID := mixFunc(entityID, topic)
 	methodName := CreateSubscriptionURL(subscriptionID, "admin", "dm", "SUBSCRIPTION")
 	log.Debug("invoke unsubscribe to Core: ", methodName)
 	if c, err := c.daprClient.InvokeMethod(ctx, AppID, methodName, http.MethodDelete); err != nil {

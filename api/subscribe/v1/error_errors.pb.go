@@ -24,6 +24,8 @@ var errInvalidArgumentSomeFields *errors.TError
 var errDuplicateCreate *errors.TError
 var errSomeDuplicateCreate *errors.TError
 var errTryToDeleteDefaultSubscribe *errors.TError
+var errForbidden *errors.TError
+var errDefaultSubscribeUnableToModify *errors.TError
 
 func init() {
 	errUnknown = errors.New(int(codes.Unknown), "io.tkeel.rudder.api.config.v1.ERR_UNKNOWN", "未知类型")
@@ -52,6 +54,10 @@ func init() {
 	errors.Register(errSomeDuplicateCreate)
 	errTryToDeleteDefaultSubscribe = errors.New(int(codes.InvalidArgument), "io.tkeel.rudder.api.config.v1.ERR_TRY_TO_DELETE_DEFAULT_SUBSCRIBE", "默认订阅不可删除")
 	errors.Register(errTryToDeleteDefaultSubscribe)
+	errForbidden = errors.New(int(codes.PermissionDenied), "io.tkeel.rudder.api.config.v1.ERR_FORBIDDEN", "禁止对该资源操作")
+	errors.Register(errForbidden)
+	errDefaultSubscribeUnableToModify = errors.New(int(codes.PermissionDenied), "io.tkeel.rudder.api.config.v1.ERR_DEFAULT_SUBSCRIBE_UNABLE_TO_MODIFY", "默认订阅无法被修改")
+	errors.Register(errDefaultSubscribeUnableToModify)
 }
 
 func ErrUnknown() errors.Error {
@@ -104,4 +110,12 @@ func ErrSomeDuplicateCreate() errors.Error {
 
 func ErrTryToDeleteDefaultSubscribe() errors.Error {
 	return errTryToDeleteDefaultSubscribe
+}
+
+func ErrForbidden() errors.Error {
+	return errForbidden
+}
+
+func ErrDefaultSubscribeUnableToModify() errors.Error {
+	return errDefaultSubscribeUnableToModify
 }

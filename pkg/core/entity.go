@@ -58,7 +58,11 @@ func (c Client) CreateEntity(id, userID, source string) (*Entity, error) {
 	createEntityURL := CreateEntityURL(id, userID, source)
 
 	log.Debugf("invoke create entity %s", createEntityURL)
-	resp, err := c.daprClient.InvokeMethod(ctx, AppID, createEntityURL, http.MethodPost)
+	data := dapr.DataContent{
+		Data:        []byte(`{}`),
+		ContentType: MimeJson,
+	}
+	resp, err := c.daprClient.InvokeMethodWithContent(ctx, AppID, createEntityURL, http.MethodPost, &data)
 	if err != nil {
 		log.Errorf("invoke %s \n response content: %s \n err:%v", createEntityURL, string(resp), err)
 		return nil, err

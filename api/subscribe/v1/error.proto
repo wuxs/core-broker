@@ -67,4 +67,12 @@ enum Error {
   // @msg=默认订阅不可删除
   // @code=INVALID_ARGUMENT
   ERR_TRY_TO_DELETE_DEFAULT_SUBSCRIBE = 12;
+
+  // @msg=禁止对该资源操作
+  // @code=PERMISSION_DENIED
+  ERR_FORBIDDEN = 13;
+
+  // @msg=默认订阅无法被修改
+  // @code=PERMISSION_DENIED
+  ERR_DEFAULT_SUBSCRIBE_UNABLE_TO_MODIFY = 14;
 }

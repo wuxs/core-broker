@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"github.com/go-sql-driver/mysql"
@@ -22,7 +23,7 @@ const (
 	ErrPartialFailure = "PARTIAL FAILURE"
 
 	_DefaultSubscribeTitle       = "我的订阅"
-	_DefaultSubscribeDescription = "这是我的默认订阅，该订阅无法被删除，但是可以被修改。"
+	_DefaultSubscribeDescription = "这是我的默认订阅，该订阅无法被删除，无法被修改。"
 )
 
 var (
@@ -316,7 +317,11 @@ func (s *SubscribeService) UpdateSubscribe(ctx context.Context, req *pb.UpdateSu
 	if validateSubscribeResult.RowsAffected == 0 {
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
 		log.Error("err:", err)
-		return nil, pb.ErrUnauthenticated()
+		return nil, pb.ErrForbidden()
+	}
+
+	if subscribe.IsDefault {
+		return nil, pb.ErrDefaultSubscribeUnableToModify()
 	}
 
 	subscribe.Title = req.Title
@@ -354,6 +359,10 @@ func (s *SubscribeService) DeleteSubscribe(ctx context.Context, req *pb.DeleteSu
 		err = errors.Wrap(validateSubscribeResult.Error, "subscribe and user ID mismatch")
 		log.Error("err:", err)
 		return nil, pb.ErrUnauthenticated()
+	}
+
+	if subscribe.IsDefault {
+		return nil, pb.ErrDefaultSubscribeUnableToModify()
 	}
 
 	if err = model.DB().Delete(&subscribe).Error; err != nil {
@@ -577,6 +586,16 @@ func (s *SubscribeService) SubscribeByDevice(ctx context.Context, req *pb.Subscr
 		return nil, errors.New("invalid subscribe ids")
 	}
 
+	subIDs := make([]uint, 0, len(req.SubscribeIds))
+	for _, v := range req.SubscribeIds {
+		if i, err := strconv.Atoi(v); err != nil {
+			log.Error("err:", err)
+			return nil, pb.ErrInvalidArgumentSomeFields()
+		} else {
+			subIDs = append(subIDs, uint(i))
+		}
+	}
+
 	var find []model.Subscribe
 	validateSubscribeResult := model.DB().Model(&model.Subscribe{}).
 		Select("id").
@@ -588,11 +607,11 @@ func (s *SubscribeService) SubscribeByDevice(ctx context.Context, req *pb.Subscr
 		return nil, pb.ErrUnauthenticated()
 	}
 	subscribeEntities := make([]model.SubscribeEntities, len(req.SubscribeIds))
-	for i := range req.SubscribeIds {
+	for i := range subIDs {
 		subscribeEntities[i] = model.SubscribeEntities{
-			SubscribeID: uint(req.SubscribeIds[i]),
+			SubscribeID: subIDs[i],
 			EntityID:    req.Id,
-			UniqueKey:   subscribeuril.GenerateSubscribeTopic(uint(req.SubscribeIds[i]), req.Id),
+			UniqueKey:   subscribeuril.GenerateSubscribeTopic(subIDs[i], req.Id),
 		}
 	}
 	if err = model.DB().Debug().Create(&subscribeEntities).Error; err != nil {

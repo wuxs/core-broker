@@ -522,7 +522,7 @@ message ValidateSubscribedResponse {
 message SubscribeByDeviceRequest {
   string id = 1
     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "device id"}];
-  repeated uint64 subscribe_ids = 2
+  repeated string subscribe_ids = 2
     [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "subscribe ids"}];
 }
 

@@ -45,8 +45,8 @@ type WsRequest struct {
 
 const PubsubName = "core-broker-pubsub"
 
-func GenerateSubscriptionID(entityID string) string {
-	return entityID + "_" + Topic
+func SubscriptionIDByJoin(entityID, topic string) string {
+	return entityID + "_" + topic
 }
 
 func GetEntityID(subscriptionID string) string {

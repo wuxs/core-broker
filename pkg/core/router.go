@@ -13,3 +13,7 @@ func QueryDeviceEntityURL(entityID string) string {
 func CreateEntityURL(entityID, userID, source string) string {
 	return fmt.Sprintf("v1/entities?id=%s&owner=%s&source=%s", entityID, userID, source)
 }
+
+func CreateSubscriptionURL(subID, userID, source, typeOf string) string {
+	return fmt.Sprintf("v1/subscriptions?id=%s&owner=%s&source=%s", subID, userID, source)
+}

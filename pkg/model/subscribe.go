@@ -1,6 +1,8 @@
 package model
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"strconv"
 	"strings"
 
@@ -124,11 +126,11 @@ func (e *SubscribeEntities) BeforeDelete(tx *gorm.DB) error {
 }
 
 func createCoreSubscription(entityID string, topic string) error {
-	return coreClient.Subscribe(entityID, topic)
+	return coreClient.Subscribe(entityID, topic, subscriptionIDByMD5AndPrefix)
 }
 
 func deleteCoreSubscription(entityID string, topic string) error {
-	return coreClient.Unsubscribe(entityID, topic)
+	return coreClient.Unsubscribe(entityID, topic, subscriptionIDByMD5AndPrefix)
 }
 
 type UtilChoice uint8
@@ -193,4 +195,12 @@ func updateEntitySubscribeEndpoint(entityID, endpoint string, c UtilChoice) erro
 
 func NewUndeleteable(content string) error {
 	return errors.Wrap(ErrUndeleteable, content)
+}
+
+const prefix = "cb-"
+
+func subscriptionIDByMD5AndPrefix(entityID, topic string) string {
+	h := md5.New()
+	h.Write([]byte(entityID + topic))
+	return prefix + hex.EncodeToString(h.Sum(nil))
 }

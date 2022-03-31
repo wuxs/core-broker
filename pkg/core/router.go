@@ -15,5 +15,5 @@ func CreateEntityURL(entityID, userID, source string) string {
 }
 
 func CreateSubscriptionURL(subID, userID, source, typeOf string) string {
-	return fmt.Sprintf("v1/subscriptions?id=%s&owner=%s&source=%s", subID, userID, source)
+	return fmt.Sprintf("v1/subscriptions?id=%s&owner=%s&source=%s&type=%s", subID, userID, source, typeOf)
 }

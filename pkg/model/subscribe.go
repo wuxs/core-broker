@@ -126,11 +126,11 @@ func (e *SubscribeEntities) BeforeDelete(tx *gorm.DB) error {
 }
 
 func createCoreSubscription(entityID string, topic string) error {
-	return coreClient.Subscribe(entityID, topic, subscriptionIDByMD5AndPrefix)
+	return coreClient.Subscribe(subscriptionIDByMD5AndPrefix(entityID, topic), entityID, topic)
 }
 
 func deleteCoreSubscription(entityID string, topic string) error {
-	return coreClient.Unsubscribe(entityID, topic, subscriptionIDByMD5AndPrefix)
+	return coreClient.Unsubscribe(subscriptionIDByMD5AndPrefix(entityID, topic))
 }
 
 type UtilChoice uint8

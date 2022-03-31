@@ -1,7 +1,8 @@
 package model
 
 import (
-	"github.com/tkeel-io/core-broker/pkg/core"
+	"crypto/md5"
+	"encoding/hex"
 	"strconv"
 	"strings"
 
@@ -125,11 +126,11 @@ func (e *SubscribeEntities) BeforeDelete(tx *gorm.DB) error {
 }
 
 func createCoreSubscription(entityID string, topic string) error {
-	return coreClient.Subscribe(entityID, topic)
+	return coreClient.Subscribe(entityID, topic, subscriptionIDByMD5AndPrefix)
 }
 
 func deleteCoreSubscription(entityID string, topic string) error {
-	return coreClient.Unsubscribe(entityID, topic)
+	return coreClient.Unsubscribe(entityID, topic, subscriptionIDByMD5AndPrefix)
 }
 
 type UtilChoice uint8
@@ -196,54 +197,10 @@ func NewUndeleteable(content string) error {
 	return errors.Wrap(ErrUndeleteable, content)
 }
 
-func UpdateEntityRuleInfo(client *core.Client, entityID, ruleinfo string, c UtilChoice) error {
-	separator := ","
-	patchData := make([]map[string]interface{}, 0)
+const prefix = "cb-"
 
-	device, err := client.GetDeviceEntity(entityID)
-	log.Debug("get device entity:", device)
-	if err != nil {
-		log.Error("get entity err:", err)
-		return err
-	}
-	val := ruleinfo
-	switch c {
-	case Add:
-		if strings.Contains(device.Properties.SysField.RuleInfo, ruleinfo) {
-			return nil
-		}
-		if device.Properties.SysField.RuleInfo != "" {
-			val = strings.Join([]string{device.Properties.SysField.RuleInfo, ruleinfo}, separator)
-		}
-	case Reduce:
-		info := strings.Split(device.Properties.SysField.RuleInfo, separator)
-		validAddresses := make([]string, 0, len(info))
-		for i := range info {
-			if info[i] != ruleinfo {
-				validAddresses = append(validAddresses, info[i])
-			}
-		}
-		if len(validAddresses) != 0 {
-			val = strings.Join(validAddresses, separator)
-		} else {
-			val = ""
-		}
-		log.Debugf("generated val: %s", val)
-	}
-
-	patchData = append(patchData, map[string]interface{}{
-		"operator": "replace",
-		"path":     "sysField._ruleInfo",
-		"value":    val,
-	})
-
-	log.Debug("patchData:", patchData)
-	log.Debug("call patch on UtilChoice (Add 1, Reduce 2):", c)
-
-	if err = client.PatchEntity(entityID, patchData); err != nil {
-		err = errors.Wrap(err, "patch entity err")
-		return err
-	}
-
-	return nil
+func subscriptionIDByMD5AndPrefix(entityID, topic string) string {
+	h := md5.New()
+	h.Write([]byte(entityID + topic))
+	return prefix + hex.EncodeToString(h.Sum(nil))
 }

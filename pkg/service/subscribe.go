@@ -110,7 +110,7 @@ func (s *SubscribeService) SubscribeEntitiesByGroups(ctx context.Context, req *p
 		Id:     req.Id,
 		Status: SuccessStatus,
 	}
-	ids, err := s.getDeviceEntitiesIDsFromGroups(ctx, req.Groups, authUser.Token)
+	ids, err := s.getDeviceEntitiesIDsFromGroups(ctx, req.Groups, authUser.Token, authUser.Token)
 	if err != nil {
 		err = errors.Wrap(err, "get device entities IDs from groups IDs error")
 		log.Error("err:", err)
@@ -149,7 +149,7 @@ func (s *SubscribeService) SubscribeEntitiesByModels(ctx context.Context, req *p
 		Id:     req.Id,
 		Status: SuccessStatus,
 	}
-	ids, err := s.getDeviceEntitiesIDsFromTemplates(ctx, req.Models, authUser.Token)
+	ids, err := s.getDeviceEntitiesIDsFromTemplates(ctx, req.Models, authUser.Token, authUser.Auth)
 	if err != nil {
 		err = errors.Wrap(err, "get device entities IDs from models IDs error")
 		log.Error("err:", err)
@@ -234,7 +234,7 @@ func (s *SubscribeService) ListSubscribeEntities(ctx context.Context, req *pb.Li
 	conditions := make(deviceutil.Conditions, 0)
 	conditions = append(conditions, deviceutil.EqQuery(Owner, authUser.ID))
 	conditions = append(conditions, deviceutil.WildcardQuery(SubscribePath, subscribe.Endpoint))
-	data, err := s.getEntitiesByConditions(conditions, authUser.Token, &page)
+	data, err := s.getEntitiesByConditions(conditions, authUser.Token, authUser.Auth, &page)
 	if err != nil {
 		log.Error("err:", err)
 		if errors.Is(err, ErrDeviceNotFound) {
@@ -634,9 +634,9 @@ func (s *SubscribeService) createSubscribeEntitiesRecords(entityIDs []string, su
 	return records
 }
 
-func (s *SubscribeService) getDeviceEntitiesIDsFromGroups(ctx context.Context, groups []string, token string) ([]string, error) {
+func (s *SubscribeService) getDeviceEntitiesIDsFromGroups(ctx context.Context, groups []string, token, auth string) ([]string, error) {
 	var data []string
-	dc := deviceutil.NewClient(token)
+	dc := deviceutil.NewClient(token, auth)
 	for i := range groups {
 		bytes, err := dc.Search(deviceutil.DeviceSearch, deviceutil.Conditions{deviceutil.GroupQuery(groups[i]), deviceutil.DeviceTypeQuery()})
 		if err != nil {
@@ -657,9 +657,9 @@ func (s *SubscribeService) getDeviceEntitiesIDsFromGroups(ctx context.Context, g
 	return data, nil
 }
 
-func (s *SubscribeService) getDeviceEntitiesIDsFromTemplates(ctx context.Context, templates []string, token string) ([]string, error) {
+func (s *SubscribeService) getDeviceEntitiesIDsFromTemplates(ctx context.Context, templates []string, token, auth string) ([]string, error) {
 	var data []string
-	dc := deviceutil.NewClient(token)
+	dc := deviceutil.NewClient(token, auth)
 	for i := range templates {
 		bytes, err := dc.Search(deviceutil.DeviceSearch, deviceutil.Conditions{deviceutil.TemplateQuery(templates[i])})
 		if err != nil {
@@ -679,9 +679,9 @@ func (s *SubscribeService) getDeviceEntitiesIDsFromTemplates(ctx context.Context
 	return data, nil
 }
 
-func (s SubscribeService) deviceEntities(ids []string, token string) ([]*pb.Entity, error) {
+func (s SubscribeService) deviceEntities(ids []string, token, auth string) ([]*pb.Entity, error) {
 	entities := make([]*pb.Entity, 0, len(ids))
-	client := deviceutil.NewClient(token)
+	client := deviceutil.NewClient(token, auth)
 	for _, id := range ids {
 		bytes, err := client.Search(deviceutil.EntitySearch, deviceutil.Conditions{deviceutil.DeviceQuery(id)})
 		if err != nil {
@@ -713,8 +713,8 @@ func (s SubscribeService) deviceEntities(ids []string, token string) ([]*pb.Enti
 	return entities, nil
 }
 
-func (s SubscribeService) getEntitiesByConditions(conditions deviceutil.Conditions, token string, page *pagination.Page) ([]*pb.Entity, error) {
-	client := deviceutil.NewClient(token)
+func (s SubscribeService) getEntitiesByConditions(conditions deviceutil.Conditions, token, auth string, page *pagination.Page) ([]*pb.Entity, error) {
+	client := deviceutil.NewClient(token, auth)
 	entities := make([]*pb.Entity, 0)
 
 	bytes, err := client.Search(deviceutil.EntitySearch, conditions,

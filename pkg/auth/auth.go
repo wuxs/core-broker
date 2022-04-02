@@ -23,6 +23,7 @@ type User struct {
 	ID    string `json:"id"`
 	Role  string `json:"role"`
 	Token string `json:"token"`
+	Auth  string `json:"auth"`
 }
 
 func GetUser(ctx context.Context) (User, error) {
@@ -33,6 +34,7 @@ func GetUser(ctx context.Context) (User, error) {
 		return u, ErrNotFound
 	}
 	authInfo := strings.Join(authHTTPHeader, "")
+	u.Auth = authInfo
 	authStrBytes, err := base64.StdEncoding.DecodeString(authInfo)
 	if err != nil {
 		err = errors.Wrap(err, "decode auth header error")

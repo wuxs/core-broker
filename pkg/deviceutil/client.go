@@ -25,11 +25,13 @@ const (
 type Client struct {
 	http  *http.Client
 	token string
+	auth  string
 }
 
-func NewClient(token string) *Client {
+func NewClient(token, auth string) *Client {
 	return &Client{
 		token: token,
+		auth:  auth,
 		http:  &http.Client{},
 	}
 }
@@ -77,6 +79,7 @@ func (c Client) Search(url Service, conditions Conditions, options ...RequestOpt
 		return nil, err
 	}
 	req.Header.Add("Authorization", c.token)
+	req.Header.Add("tkeelAuthHeader", c.auth)
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := c.http.Do(req)

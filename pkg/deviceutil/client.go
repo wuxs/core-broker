@@ -79,7 +79,7 @@ func (c Client) Search(url Service, conditions Conditions, options ...RequestOpt
 		return nil, err
 	}
 	req.Header.Add("Authorization", c.token)
-	req.Header.Add("tkeelAuthHeader", c.auth)
+	req.Header.Add("x-tKeel-auth", c.auth)
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := c.http.Do(req)

@@ -87,7 +87,61 @@ func (e *SubscribeEntities) AfterCreate(tx *gorm.DB) error {
 	if e.EntityID == "" {
 		return errors.New("entityID is empty")
 	}
-	tx.Model(&e.Subscribe).Where("id = ?", e.SubscribeID).First(&e.Subscribe)
+	//tx.Model(&e.Subscribe).Where("id = ?", e.SubscribeID).First(&e.Subscribe)
+	subscribe := Subscribe{}
+	tx.Model(&subscribe).Where("id = ?", e.SubscribeID).First(&subscribe)
+	e.Subscribe = subscribe
+	log.Debug("creation of SubscribeEntities:", *e)
+	if err := createCoreSubscription(e.EntityID, e.Subscribe.Endpoint); err != nil {
+		err = errors.Wrap(err, "create core subscription err")
+		log.Error(err)
+		return err
+	}
+	if err := updateEntitySubscribeEndpoint(e.EntityID,
+		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10),
+			AMQPAddressString(e.Subscribe.Endpoint)}, "@"),
+		Add); err != nil {
+		err = errors.Wrap(err, "update entity subscribe endpoint err")
+		log.Error(err)
+		return err
+	}
+	return nil
+}
+
+func (e *SubscribeEntities) BeforeUpdate(tx *gorm.DB) error {
+	// this condition will skip by destroyRelevant() function
+	if e.EntityID == "" && e.Subscribe.Endpoint == "" {
+		log.Debug("skip because no releases info")
+		return nil
+	}
+	log.Debug("deleted of SubscribeEntities:", *e)
+	if err := updateEntitySubscribeEndpoint(e.EntityID,
+		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10),
+			AMQPAddressString(e.Subscribe.Endpoint)}, "@"),
+		Reduce); err != nil {
+		return err
+	}
+	if err := deleteCoreSubscription(e.EntityID, e.Subscribe.Endpoint); err != nil {
+		log.Error(err)
+		return err
+	}
+	return nil
+}
+
+func (e *SubscribeEntities) AfterUpdate(tx *gorm.DB) error {
+	if e.UniqueKey == "" {
+		return errors.New("UniqueKey is empty")
+	}
+	if e.SubscribeID == 0 {
+		return errors.New("subscribeID id is empty")
+	}
+	if e.EntityID == "" {
+		return errors.New("entityID is empty")
+	}
+	subscribe := Subscribe{}
+	tx.Model(&subscribe).Where("id = ?", e.SubscribeID).First(&subscribe)
+	e.Subscribe = subscribe
+	//	tx.Model(&e.Subscribe).Where("id = ?", e.SubscribeID).First(&e.Subscribe)
 	log.Debug("creation of SubscribeEntities:", *e)
 	if err := createCoreSubscription(e.EntityID, e.Subscribe.Endpoint); err != nil {
 		err = errors.Wrap(err, "create core subscription err")

@@ -455,7 +455,7 @@ func (s *SubscribeService) ListSubscribe(ctx context.Context, req *pb.ListSubscr
 			Id:          subscribeResponse.Id,
 			Title:       subscribeResponse.Title,
 			Description: subscribeResponse.Description,
-			Endpoint:    subscribeResponse.Endpoint,
+			Endpoint:    model.AMQPAddressString(subscribeResponse.Endpoint),
 			IsDefault:   subscribeResponse.IsDefault,
 		})
 	}

@@ -321,6 +321,7 @@ func (s *SubscribeService) UpdateSubscribe(ctx context.Context, req *pb.UpdateSu
 		return nil, pb.ErrDefaultSubscribeUnableToModify()
 	}
 
+	oldTitle := subscribe.Title
 	subscribe.Title = req.Title
 	subscribe.Description = req.Description
 
@@ -328,6 +329,13 @@ func (s *SubscribeService) UpdateSubscribe(ctx context.Context, req *pb.UpdateSu
 		err = errors.Wrap(err, "update subscribe info err")
 		log.Error("err:", err)
 		return nil, pb.ErrInternalError()
+	}
+
+	if oldTitle != subscribe.Title {
+		err = subscribe.UpdateEndpointTitle(oldTitle, subscribe.Title)
+		if err != nil {
+			log.Error(err)
+		}
 	}
 
 	resp := &pb.UpdateSubscribeResponse{

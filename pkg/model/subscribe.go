@@ -30,6 +30,39 @@ func (s *Subscribe) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
+func (s *Subscribe) UpdateEndpointTitle(oldTitle, newTitle string) error {
+	subEntities := make([]*SubscribeEntities, 0)
+	res := DB().Model(&SubscribeEntities{}).
+		Where(&SubscribeEntities{
+			SubscribeID: s.ID,
+		}).Find(&subEntities)
+	log.Info(res)
+	if res.Error != nil {
+		return nil
+	}
+	for _, e := range subEntities {
+		log.Info(e, oldTitle, newTitle)
+		subscribe := Subscribe{}
+		DB().Model(&subscribe).Where("id = ?", e.SubscribeID).First(&subscribe)
+		e.Subscribe = subscribe
+		if err := updateEntitySubscribeEndpoint(e.EntityID,
+			strings.Join([]string{oldTitle, strconv.FormatUint(uint64(e.SubscribeID), 10),
+				AMQPAddressString(e.Subscribe.Endpoint)}, "@"),
+			Reduce); err != nil {
+			log.Error("reduce entity subscribe endpoint err")
+			continue
+		} else {
+			if err := updateEntitySubscribeEndpoint(e.EntityID,
+				strings.Join([]string{newTitle, strconv.FormatUint(uint64(e.SubscribeID), 10),
+					AMQPAddressString(e.Subscribe.Endpoint)}, "@"),
+				Add); err != nil {
+				log.Error("add entity subscribe endpoint err")
+			}
+		}
+	}
+	return nil
+}
+
 func (s *Subscribe) BeforeDelete(tx *gorm.DB) error {
 	if s.IsDefault {
 		return NewUndeleteable("this is default subscribe")

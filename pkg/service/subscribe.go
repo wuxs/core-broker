@@ -82,7 +82,7 @@ func CreateSubscribeEntities(records []*model.SubscribeEntities) (err error) {
 			if ok && mysqlErr.Number == 1062 {
 				continue
 			}
-			return pb.ErrInternalError()
+			//			return pb.ErrInternalError()
 		}
 		affected += 1
 	}
@@ -533,6 +533,7 @@ func (s *SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeS
 		}
 		if err := model.DB().Debug().Where(targetSubscribeEntity).First(&targetSubscribeEntity).Error; !errors.Is(err, gorm.ErrRecordNotFound) {
 			errs = append(errs, errors.New("target subscribe entity already exists"))
+			_ = model.DB().Delete(&subscribeEntity)
 			continue
 		}
 		if err = model.DB().Debug().Model(&subscribeEntity).Where(subscribeEntity).Updates(targetSubscribeEntity).Error; err != nil {
@@ -544,7 +545,7 @@ func (s *SubscribeService) ChangeSubscribed(ctx context.Context, req *pb.ChangeS
 		err = errors.Wrap(errs[0], "change subscribed failed")
 		log.Error("err:", err)
 		log.Error("more err form db process:", errs)
-		return nil, pb.ErrInternalError()
+		//		return nil, pb.ErrInternalError()
 	}
 
 	resp := &pb.ChangeSubscribedResponse{Status: SuccessStatus}
@@ -611,17 +612,17 @@ func (s *SubscribeService) SubscribeByDevice(ctx context.Context, req *pb.Subscr
 		log.Error("err:", err)
 		return nil, pb.ErrUnauthenticated()
 	}
-	subscribeEntities := make([]model.SubscribeEntities, len(req.SubscribeIds))
+	//	subscribeEntities := make([]model.SubscribeEntities, len(req.SubscribeIds))
 	for i := range subIDs {
-		subscribeEntities[i] = model.SubscribeEntities{
+		subscribeEntity := model.SubscribeEntities{
 			SubscribeID: subIDs[i],
 			EntityID:    req.Id,
 			UniqueKey:   subscribeuril.GenerateSubscribeTopic(subIDs[i], req.Id),
 		}
-	}
-	if err = model.DB().Debug().Create(&subscribeEntities).Error; err != nil {
-		log.Error("create err:", err)
-		return nil, pb.ErrInternalError()
+		if err = model.DB().Debug().Create(&subscribeEntity).Error; err != nil {
+			log.Error("create err:", err)
+			//	return nil, pb.ErrInternalError()
+		}
 	}
 
 	resp := &pb.SubscribeByDeviceResponse{Status: SuccessStatus}

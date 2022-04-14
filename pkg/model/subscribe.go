@@ -98,7 +98,7 @@ func (e *SubscribeEntities) AfterCreate(tx *gorm.DB) error {
 		return err
 	}
 	if err := updateEntitySubscribeEndpoint(e.EntityID,
-		strings.Join([]string{strconv.FormatUint(uint64(e.SubscribeID), 10),
+		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10),
 			AMQPAddressString(e.Subscribe.Endpoint)}, "@"),
 		Add); err != nil {
 		err = errors.Wrap(err, "update entity subscribe endpoint err")
@@ -116,7 +116,7 @@ func (e *SubscribeEntities) BeforeUpdate(tx *gorm.DB) error {
 	}
 	log.Debug("deleted of SubscribeEntities:", *e)
 	if err := updateEntitySubscribeEndpoint(e.EntityID,
-		strings.Join([]string{strconv.FormatUint(uint64(e.SubscribeID), 10),
+		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10),
 			AMQPAddressString(e.Subscribe.Endpoint)}, "@"),
 		Reduce); err != nil {
 		return err
@@ -149,7 +149,7 @@ func (e *SubscribeEntities) AfterUpdate(tx *gorm.DB) error {
 		return err
 	}
 	if err := updateEntitySubscribeEndpoint(e.EntityID,
-		strings.Join([]string{strconv.FormatUint(uint64(e.SubscribeID), 10),
+		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10),
 			AMQPAddressString(e.Subscribe.Endpoint)}, "@"),
 		Add); err != nil {
 		err = errors.Wrap(err, "update entity subscribe endpoint err")
@@ -167,7 +167,7 @@ func (e *SubscribeEntities) BeforeDelete(tx *gorm.DB) error {
 	}
 	log.Debug("deleted of SubscribeEntities:", *e)
 	if err := updateEntitySubscribeEndpoint(e.EntityID,
-		strings.Join([]string{strconv.FormatUint(uint64(e.SubscribeID), 10),
+		strings.Join([]string{e.Subscribe.Title, strconv.FormatUint(uint64(e.SubscribeID), 10),
 			AMQPAddressString(e.Subscribe.Endpoint)}, "@"),
 		Reduce); err != nil {
 		return err

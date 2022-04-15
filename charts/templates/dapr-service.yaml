@@ -1,3 +1,4 @@
+{{- if semverCompare "<1.6.0" .Values.daprVersion -}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -31,3 +32,4 @@ spec:
     targetPort: 9090
   selector:
     app: {{ include "core-broker.name" . }}
+{{- end}}

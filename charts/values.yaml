@@ -4,6 +4,8 @@
 
 replicaCount: 1
 
+daprVersion: "1.6"
+
 image:
   repository: tkeelio/core-broker
   pullPolicy: Always
